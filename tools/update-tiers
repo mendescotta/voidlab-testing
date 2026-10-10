@@ -58,8 +58,6 @@ nerd-fonts-cascadiacode review
 pop-fonts review
 
 # --- manual: toolchain, init and boot
-gcc manual
-gcc-multilib manual
 elogind manual
 eudev manual
 pam manual
@@ -127,7 +125,6 @@ cosmic-files manual
 cosmic-greeter manual
 cosmic-icons manual
 cosmic-idle manual
-cosmic-initial-setup manual
 cosmic-launcher manual
 cosmic-monitor manual
 cosmic-notifications manual
