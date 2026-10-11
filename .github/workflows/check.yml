@@ -48,4 +48,4 @@ jobs:
         if: always()
         env:
           JOB_STATUS: ${{ job.status }}
-        run: echo "check: $JOB_STATUS" >> "$GITHUB_STEP_SUMMARY"
+        run: 'echo "check: $JOB_STATUS" >> "$GITHUB_STEP_SUMMARY"'

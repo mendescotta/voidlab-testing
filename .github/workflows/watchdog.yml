@@ -36,4 +36,4 @@ jobs:
         if: always()
         env:
           JOB_STATUS: ${{ job.status }}
-        run: echo "watchdog: $JOB_STATUS" >> "$GITHUB_STEP_SUMMARY"
+        run: 'echo "watchdog: $JOB_STATUS" >> "$GITHUB_STEP_SUMMARY"'
