@@ -1,0 +1,9 @@
+name: Setup CI
+description: Prepare a void-glibc-full container for voidlab CI (CI mirror, tools, builder user); run after checkout
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare container
+      shell: sh
+      run: sh tools/ci-prepare.sh

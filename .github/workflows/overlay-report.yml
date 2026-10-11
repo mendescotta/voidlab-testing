@@ -33,8 +33,7 @@ jobs:
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Prepare container
-        run: sh tools/ci-prepare.sh
+      - uses: ./.github/actions/setup-ci
 
       - name: Report
         env:
@@ -44,3 +43,9 @@ jobs:
         run: |
           chown -R builder:builder "$GITHUB_WORKSPACE"
           sudo -Eu builder env HOME=/home/builder bash tools/ci-overlay-report.sh
+
+      - name: Job summary
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: echo "overlay-report: $JOB_STATUS" >> "$GITHUB_STEP_SUMMARY"

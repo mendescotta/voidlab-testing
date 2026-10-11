@@ -18,7 +18,7 @@ for f in "${files[@]}"; do
 		assert_eq "$n: has no write permission"  "$(grep -cE ': write' "$f" || true)" "0"
 		assert_grep "$n: token is read-only"     'contents: read' "$f"
 		assert_eq "$n: never builds or publishes" "$(grep -cE 'ci-build|ci-publish|voidlab (build|publish)|--privileged|upload-artifact' "$f" || true)" "0"
-	else
+	elif [ "$n" != validate.yml ]; then
 		assert_eq "$n: no pull_request trigger"  "$(grep -cE '^\s*pull_request\b' "$f" || true)" "0"
 	fi
 	assert_grep "$n: declares permissions"      '^permissions:' "$f"
@@ -62,6 +62,6 @@ assert_grep "publish job downloads the artifact"   'download-artifact' <(echo "$
 assert_eq "ci-build.sh pushes, opens and publishes nothing" "$(grep -cE 'git push|gh +(pr|issue|release)|"\$VL" +publish' "$ROOT/tools/ci-build.sh" || true)" "0"
 assert_eq "ci-build.sh only ever strips the signing key" "$(grep 'VOIDLAB_PRIVKEY' "$ROOT/tools/ci-build.sh" | grep -vc -- '-u VOIDLAB_PRIVKEY' || true)" "0"
 assert_eq "ci-publish.sh never executes artifact content" "$(grep -cE '(^|[[:space:];&|(])(source|\.|bash|sh|exec|eval|python3|perl) +["]?\$BUILD_OUT' "$ROOT/tools/ci-publish.sh" || true)" "0"
-assert_eq "every action is pinned to a full commit SHA" "$(grep -h 'uses:' "${files[@]}" | grep -vcE 'uses: [^@ ]+@[0-9a-f]{40}( |$)' || true)" "0"
+assert_eq "every action is pinned to a full commit SHA" "$(grep -h 'uses:' "${files[@]}" | grep -vcE 'uses: (\.\/[^@ ]*|[^@ ]+@[0-9a-f]{40})( |$)' || true)" "0"
 assert_grep "dependabot watches github-actions" 'package-ecosystem: github-actions' "$ROOT/.github/dependabot.yml"
 finish

@@ -1,0 +1,34 @@
+name: validate
+
+# Lints the workflow files themselves with actionlint when a pull request touches them. Read-only,
+# no secret.
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: actionlint
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7 -color
+
+      - name: Job summary
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: echo "actionlint: $JOB_STATUS" >> "$GITHUB_STEP_SUMMARY"

@@ -50,8 +50,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Prepare container
-        run: sh tools/ci-prepare.sh
+      - uses: ./.github/actions/setup-ci
 
       - name: Bump, build, test
         env:
@@ -94,8 +93,7 @@ jobs:
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Prepare container
-        run: sh tools/ci-prepare.sh
+      - uses: ./.github/actions/setup-ci
 
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
@@ -112,3 +110,9 @@ jobs:
           INPUT_PKG: ${{ inputs.pkg }}
           BASE_BRANCH: ${{ github.event.repository.default_branch }}
         run: bash tools/ci-publish.sh
+
+      - name: Job summary
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: echo "publish: $JOB_STATUS" >> "$GITHUB_STEP_SUMMARY"
