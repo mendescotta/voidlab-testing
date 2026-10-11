@@ -32,10 +32,10 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Prepare container
-        run: |
-          sh tools/ci-prepare.sh
-          xbps-install -y python3
+      - uses: ./.github/actions/setup-ci
+
+      - name: Install python3
+        run: xbps-install -y python3
 
       - name: Check
         env:
@@ -43,3 +43,9 @@ jobs:
         run: |
           chown -R builder:builder "$GITHUB_WORKSPACE"
           sudo -Eu builder env HOME=/home/builder BASE="origin/${BASE_REF:-main}" bash tools/ci-check.sh
+
+      - name: Job summary
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: echo "check: $JOB_STATUS" >> "$GITHUB_STEP_SUMMARY"
