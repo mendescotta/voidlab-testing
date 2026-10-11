@@ -1,6 +1,6 @@
 # Template file for 'python3-gobject'
 pkgname=python3-gobject
-version=3.58.0
+version=3.58.1
 revision=1
 build_style=meson
 build_helper="gir"
@@ -15,7 +15,7 @@ license="LGPL-2.1-or-later"
 homepage="https://pygobject.readthedocs.io/"
 changelog="https://pygobject.readthedocs.io/en/latest/changelog.html"
 distfiles="${GNOME_SITE}/pygobject/${version%.*}/pygobject-${version}.tar.gz"
-checksum=45068697de3ffe46840ca369705f23118b34db4f7deb63f6eff079a6734ddcca
+checksum=4c80598ade17fbaa7798e01a25d0bf29ce109740786026a074c5c62bb3e79d23
 provides="py3:gi-${version}_${revision}"
 make_check_pre="xvfb-run"
 

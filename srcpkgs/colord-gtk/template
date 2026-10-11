@@ -1,7 +1,7 @@
 # Template file for 'colord-gtk'
 pkgname=colord-gtk
-version=0.3.0
-revision=2
+version=0.3.1
+revision=1
 build_style=meson
 build_helper=gir
 configure_args="-Dtests=false $(vopt_bool vala vapi) $(vopt_bool docs docs)
@@ -17,7 +17,7 @@ license="LGPL-2.1-or-later"
 homepage="https://github.com/hughsie/colord-gtk"
 changelog="https://raw.githubusercontent.com/hughsie/colord-gtk/main/NEWS"
 distfiles="${FREEDESKTOP_SITE}/colord/releases/${pkgname}-${version}.tar.xz"
-checksum=b9466656d66d9a6ffbc2dd04fa91c8f6af516bf9efaacb69744eec0f56f3c1d0
+checksum=c176b889b75630a17f4e3d7ef24c09a3e12368e633496087459c8b53ac3a122d
 
 build_options="vala docs man"
 build_options_default="vala man docs"

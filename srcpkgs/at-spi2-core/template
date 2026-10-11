@@ -1,6 +1,6 @@
 # Template file for 'at-spi2-core'
 pkgname=at-spi2-core
-version=2.62.0.1
+version=2.62.1
 revision=1
 build_style=meson
 build_helper="gir"
@@ -15,8 +15,8 @@ license="GPL-2.0-or-later"
 homepage="https://gitlab.gnome.org/GNOME/at-spi2-core"
 changelog="https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/gnome-48/NEWS"
 #changelog="https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/main/NEWS"
-distfiles="${GNOME_SITE}/at-spi2-core/${version%.*.*}/at-spi2-core-${version}.tar.xz"
-checksum=fa462f1834bae569c5944c34608872f9447e5a2889ba2aa4d5ff9f2d6ff8a395
+distfiles="${GNOME_SITE}/at-spi2-core/${version%.*}/at-spi2-core-${version}.tar.xz"
+checksum=cca6b6a86e4389d89b370288761ce2385ddeceb10c4412da78689bc30c88af2d
 make_check_pre="dbus-run-session"
 
 # Package build options

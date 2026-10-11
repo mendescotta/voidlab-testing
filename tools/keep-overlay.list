@@ -13,4 +13,6 @@ libnma                    # GTK4 UI split into libnma-gtk4 (core links no gtk4)
 colord-gtk                # GTK4 UI split into colord-gtk4 (core links no gtk4)
 ibus                      # GTK3 UI split into ibus-ui-gtk3 (no gtk3, notify, dbusmenu in the core)
 gst-plugins-good1         # GTK3 plugin split into gst-plugins-good1-gtk3 (core links no gtk3 or gstgl)
+gstreamer1                # Co-versioned with the overlay GStreamer plugin stack
+gst-plugins-base1         # Co-versioned with the overlay GStreamer plugin stack
 libdecor                  # GTK plugin split into libdecor-gtk (core links no gtk3)

@@ -1,7 +1,7 @@
 # Template file for 'glib'
 # keep in sync with glib-bootstrap
 pkgname=glib
-version=2.90.0
+version=2.90.1
 revision=1
 build_style=meson
 build_helper="qemu"
@@ -19,10 +19,10 @@ short_desc="GNU library of C routines"
 maintainer="Orphaned <orphan@voidlinux.org>"
 license="LGPL-2.1-or-later"
 homepage="https://www.gtk.org"
-changelog="https://gitlab.gnome.org/GNOME/glib/raw/glib-2-88/NEWS"
+changelog="https://gitlab.gnome.org/GNOME/glib/raw/glib-2-90/NEWS"
 #changelog="https://gitlab.gnome.org/GNOME/glib/raw/main/NEWS"
 distfiles="${GNOME_SITE}/glib/${version%.*}/glib-${version}.tar.xz"
-checksum=17d15cac2af80a33271127408e0abc2748eb297c595c2a26409e81e14e7d1b8f
+checksum=93c941aa17d5eb1d53fe838365f29a8b4e539c222a256d974ec8f30fc413e396
 
 python_version=3
 conflicts="gir-freedesktop<1.80.0_1" # glib typelibs are now in glib

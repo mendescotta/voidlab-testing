@@ -68,6 +68,7 @@ accountsservice manual
 nvidia manual
 # --- manual: libraries and the GNOME session stack (coordinated rebuilds)
 glib manual
+glib-bootstrap manual
 glibmm manual
 glibmm2.68 manual
 gtk4 manual
@@ -98,6 +99,8 @@ gnome-bluetooth manual
 gnome-autoar manual
 gspell manual
 gst-plugins-good1 manual
+gstreamer1 manual
+gst-plugins-base1 manual
 ibus manual
 localsearch manual
 tinysparql manual

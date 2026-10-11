@@ -2,3 +2,5 @@
 # Tiers decide what is bumped; this list decides what may never reach the public release.
 # nvidia is a proprietary driver: built locally, never published.
 nvidia
+# glib-bootstrap is a build-time bootstrap package kept in sync with glib.
+glib-bootstrap
