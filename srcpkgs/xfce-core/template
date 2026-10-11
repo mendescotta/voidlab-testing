@@ -1,7 +1,7 @@
 # Template file for 'xfce-core'
 pkgname=xfce-core
 version=4.20
-revision=3
+revision=4
 metapackage=yes
 # The xfce4 meta minus its optional apps (parole, ristretto),
 # thumbnails (tumbler pulls ffmpegthumbnailer and ffmpeg) and xfwm4-themes.
@@ -21,7 +21,7 @@ depends="
  xfce4-session>=${version}
  xfce4-settings>=${version}
  xfce4-taskmanager
- xfce4-terminal
+ alacritty
  xfconf>=${version}
  xfdesktop>=${version}
  xfwm4>=${version}"
