@@ -150,8 +150,15 @@ while IFS=$'\t' read -r -u 3 status pkg ours other; do
 			if [ "$(template_verrev "$downer" 2>/dev/null)" != "$dvr" ]; then
 				log "dependency $f is not the version of its template on main: not handed over"; continue
 			fi
+			# A previous planned bump takes precedence over a later dependency
+			# rebuild from main. Keep one owner/version and omit conflicting files.
+			recorded=$(awk -F'\t' -v p="$downer" '$2 == p { print $3 }' "$OUT/passed.tsv")
+			if [ -n "$recorded" ] && [ "$recorded" != "$dvr" ]; then
+				log "dependency $f conflicts with recorded $downer $recorded: not handed over"
+				continue
+			fi
 			cp "repo/$f" "$OUT/xbps/"
-			if ! grep -qE "^unpublished${tab}${downer}${tab}" "$OUT/passed.tsv" 2>/dev/null; then
+			if [ -z "$recorded" ]; then
 				printf 'unpublished\t%s\t%s\n' "$downer" "$dvr" >> "$OUT/passed.tsv"
 				log "dependency built along the way: $downer $dvr"
 			fi

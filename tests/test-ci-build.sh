@@ -101,6 +101,15 @@ assert_eq   "the built package itself is one entry" "$(grep -c "${tab}a${tab}" "
 printf 'bump\ta\t1.0_1\t1.1\nunpublished\tdep\t1.0_1\t0.9_1\n' > "$T/plan"
 run >/dev/null
 assert_eq   "a dependency that is also in the plan gets one entry" "$(grep -c "${tab}dep${tab}" "$W/out/passed.tsv" || true)" "1"
+# The reverse order also needs one entry: a planned bump followed by a
+# dependency rebuild from main must preserve the bump and omit the old archive.
+rm -f "$W/repo/dep-1.0_1.noarch.xbps" "$W/repo/a-1.2_1.noarch.xbps"
+printf 'bump\tdep\t1.0_1\t1.1\nbump\ta\t1.0_1\t1.2\n' > "$T/plan"
+run >/dev/null
+assert_eq "a bumped owner rebuilt later as a dependency gets one entry" "$(grep -c "${tab}dep${tab}" "$W/out/passed.tsv" || true)" "1"
+assert_grep "the planned bump keeps its version and status" '^bump'"$tab"'dep'"$tab"'1.1_1$' "$W/out/passed.tsv"
+assert_file "the bumped dependency archive is retained" "$W/out/xbps/dep-1.1_1.noarch.xbps"
+assert_no "the later conflicting dependency archive is omitted" "$W/out/xbps/dep-1.0_1.noarch.xbps"
 rm -f "$T/deps"
 
 # a package that would be rejected by the publish job fails here, with the reason in its log
