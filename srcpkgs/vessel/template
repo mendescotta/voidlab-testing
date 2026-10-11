@@ -11,7 +11,7 @@ maintainer="mendescotta <mendescotta@gmail.com>"
 license="GPL-3.0-or-later"
 homepage="https://github.com/mendescotta/vessel"
 distfiles="https://github.com/mendescotta/vessel/archive/refs/tags/v${version}.tar.gz"
-checksum=1cc68aebc2d4d4eeaa1a6371066c17e081adebb2bb4471592a9ffb97067cb71a
+checksum=596f1d684fe03d47d1c1f20c13e334cbd683df266616dbeac036590df4701d04
 
 do_install() {
 	vbin target/${RUST_TARGET}/release/vessel
