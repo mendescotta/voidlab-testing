@@ -30,8 +30,8 @@ Templates live in `srcpkgs/`. To use a local build instead of the release, set
 
 ## Packages
 
-[packages.md](packages.md) lists every template with its version here, in
-official Void and upstream. Regenerate with `./voidlab packages > packages.md`.
+[PACKAGES.md](PACKAGES.md) lists every template with its version here, in
+official Void and upstream. Regenerate it with `./voidlab packages > PACKAGES.md`.
 
 ## CI
 

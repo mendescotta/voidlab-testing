@@ -1,7 +1,7 @@
 # Templates kept in the overlay on purpose even when official Void has the same version
 # (for example rebuilds against our newer libraries). `voidlab redundant` skips these.
 
-# `name  # reason` per line. The reason is shown in packages.md ("Why carried"), so keep it to one short clause.
+# `name  # reason` per line. The reason is shown in PACKAGES.md ("Why carried"), so keep it to one short clause.
 # Rebuilt against our newer libraries: Void's binary links different sonames
 # (checked 2026-10-09 by comparing shlib-requires of our package and Void's).
 xdg-desktop-portal-gtk    # links libgnome-desktop-3.so.21 (Void's build: .20)

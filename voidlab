@@ -500,7 +500,7 @@ cmd_publish() {
 }
 
 # packages [--no-upstream]: Markdown table of every overlay template: our version, official Void's, newest
-# upstream release (xbps-src update-check; slow, skipped by --no-upstream). Stdout; see packages.md.
+# upstream release (xbps-src update-check; slow, skipped by --no-upstream). Stdout; see PACKAGES.md.
 cmd_packages() {
 	need_upstream
 	need xbps-uhelper
