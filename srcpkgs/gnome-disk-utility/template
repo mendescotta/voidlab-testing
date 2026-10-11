@@ -1,0 +1,34 @@
+# Template file for 'gnome-disk-utility'
+pkgname=gnome-disk-utility
+version=51.beta
+revision=1
+build_style=meson
+build_helper="rust"
+configure_args="-Dlogind=libelogind -Dgsd_plugin=false -Dprofile=release"
+hostmakedepends="blueprint-compiler cargo gettext glib-devel gtk4-update-icon-cache
+ pkgconf libxslt docbook-xsl"
+makedepends="elogind-devel gtk4-devel libadwaita-devel libdvdread-devel
+ libglib-devel liblzma-devel libnotify-devel libpwquality-devel libsecret-devel
+ udisks2-devel"
+depends="desktop-file-utils gptfdisk hicolor-icon-theme parted udisks2"
+short_desc="GNOME libraries and applications for dealing with storage devices"
+maintainer="mendescotta <mendescotta@gmail.com>"
+license="GPL-2.0-or-later"
+homepage="https://apps.gnome.org/DiskUtility/"
+changelog="https://gitlab.gnome.org/GNOME/gnome-disk-utility/-/raw/main/NEWS"
+distfiles="${GNOME_SITE}/gnome-disk-utility/51/gnome-disk-utility-${version}.tar.xz"
+checksum=f181d793f0684f399bf76d297c0e3716849c78fa67292b765dbd9ec3dfa5c800
+
+# Meson sets CARGO_HOME to build/cargo-home for its Rust custom targets.
+# Make the release tarball's vendored crates available from that Cargo home;
+# this includes its pinned udisks-rs git dependency.
+post_configure() {
+	mkdir -p "${builddir}/cargo-home"
+	cp "${wrksrc}/.cargo/config" "${builddir}/cargo-home/config"
+	ln -sfn "${wrksrc}/vendor" "${builddir}/cargo-home/vendor"
+}
+
+pre_build() {
+	# The source archive vendors every Cargo dependency; disallow network fallback.
+	export CARGO_NET_OFFLINE=true
+}

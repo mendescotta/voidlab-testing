@@ -1,0 +1,78 @@
+#!/bin/bash
+# GNOME lifecycle client for the per-user dinit owned by turnstile.
+set -euo pipefail
+session=${1:?session name required}
+case "$session" in *[!a-zA-Z0-9_-]*) exit 2 ;; esac
+: "${XDG_RUNTIME_DIR:?runtime directory is missing}"
+# A user manager has one activation environment. Reject a second concurrent
+# GNOME login rather than overwriting the first session's service definitions.
+exec 9>"$XDG_RUNTIME_DIR/gnome-session.lock"
+flock -n 9 || { echo 'A GNOME session is already active for this user' >&2; exit 1; }
+export GNOME_SESSION_NAME="$session" GNOME_SESSION_LEADER_PID=$$
+service_dir="$XDG_RUNTIME_DIR/gnome-session/dinit"
+install -d -m700 "$service_dir"
+ctl() { dinitctl --user --quiet "$@"; }
+# PAM starts the manager before GDM executes the session. Do not fall back to
+# a second manager: that would leave session services outside turnstile.
+for ((attempt=0; attempt<100; attempt++)); do
+    ctl list >/dev/null 2>&1 && break
+    sleep .1
+done
+ctl list >/dev/null
+ctl start dbus
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+components=(gnome-session-service gnome-shell gnome-session-initialized gsd-xsettings)
+session_keys=(DISPLAY XAUTHORITY WAYLAND_DISPLAY XDG_SESSION_ID XDG_SESSION_TYPE XDG_CURRENT_DESKTOP DESKTOP_SESSION GNOME_SESSION_NAME GNOME_SESSION_LEADER_PID)
+clear_session_environment() {
+    ctl unsetenv "${session_keys[@]}" || true
+    clear_env=()
+    for key in "${session_keys[@]}"; do clear_env+=("$key="); done
+    dbus-update-activation-environment "${clear_env[@]}" || true
+}
+stop_session() {
+    trap '' TERM INT HUP
+    ctl stop --force gnome-session.target || true
+    ctl unload gnome-session.target || true
+    for component in "${components[@]}"; do
+        ctl stop --force "$component" || true
+        ctl unload "$component" || true
+    done
+    clear_session_environment
+}
+trap stop_session EXIT
+trap 'exit 0' TERM INT HUP
+clear_session_environment
+# Import the complete login environment without evaluating its contents.
+mapfile -d '' -t session_env < <(env -0)
+ctl setenv "${session_env[@]}"
+dbus-update-activation-environment --all
+components=(gnome-session-service gnome-shell gnome-session-initialized gsd-xsettings)
+for plugin in a11y-settings color datetime housekeeping keyboard media-keys power print-notifications rfkill screensaver-proxy smartcard sound usb-protection wwan; do
+    components+=("gsd-$plugin")
+done
+if [[ -f "/usr/libexec/gnome-session/runit-sessions/$session" ]]; then
+    mapfile -t components < <(sed '/^#/d;/^$/d' "/usr/libexec/gnome-session/runit-sessions/$session")
+fi
+# This is the same profile selection as the runit leader, expressed as dinit
+# dependencies. Definitions live in runtime storage, never in a user's home.
+printf 'type = internal\n' > "$service_dir/gnome-session.target"
+for component in "${components[@]}"; do
+    [[ "$component" =~ ^[a-zA-Z0-9_-]+$ ]] || exit 2
+    [[ -f "/etc/gnome-session/runit/$session.disabled" ]] && grep -qxF "$component" "/etc/gnome-session/runit/$session.disabled" && continue
+    cat > "$service_dir/$component" <<EOF
+type = process
+command = /usr/libexec/gnome-session/dinit-component $component
+restart = on-failure
+log-type = buffer
+EOF
+    case "$component" in
+        gnome-shell|gnome-session-service|gnome-session-initialized) relation=depends-on ;;
+        *) relation=waits-for ;;
+    esac
+    printf '%s: %s\n' "$relation" "$component" >> "$service_dir/gnome-session.target"
+done
+ctl start gnome-session.target
+while ctl is-started gnome-session-service >/dev/null 2>&1; do
+    ctl is-failed gnome-shell >/dev/null 2>&1 && exit 1
+    sleep 1 9>&- & wait $! || true
+done

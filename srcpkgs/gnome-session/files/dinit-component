@@ -1,0 +1,52 @@
+#!/bin/sh
+# dinit supplies the environment imported by the session leader.
+set -eu
+# Settings services must wait for Mutter's actual Wayland socket: GDM's
+# initial environment predates the compositor and contains no display name.
+case "$1" in
+    gsd-*)
+        if [ "${XDG_SESSION_TYPE:-}" = wayland ] || [ -z "${DISPLAY:-}" ]; then
+            while :; do
+                for socket in "$XDG_RUNTIME_DIR"/wayland-*; do
+                    [ -S "$socket" ] || continue
+                    WAYLAND_DISPLAY=${socket##*/}
+                    export WAYLAND_DISPLAY
+                    break
+                done
+                [ -n "${WAYLAND_DISPLAY:-}" ] && [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ] && break
+                sleep .2
+            done
+        fi ;;
+esac
+case "$1" in
+    gnome-session-service)
+        status=0
+        /usr/libexec/gnome-session-service --session="${GNOME_SESSION_NAME:-gnome}" || status=$?
+        [ "$status" -ne 0 ] || kill -TERM "$GNOME_SESSION_LEADER_PID"
+        exit "$status" ;;
+    gnome-shell)
+        case "$GNOME_SESSION_NAME" in
+            gnome-login) mode=gdm ;;
+            gnome-initial-setup) mode=initial-setup ;;
+            *) mode=user ;;
+        esac
+        exec /usr/bin/gnome-shell --mode="$mode" ;;
+    gnome-session-initialized)
+        exec /usr/libexec/gnome-session/runit-services/gnome-session-initialized/run ;;
+    gsd-xsettings)
+        # Mutter owns Xwayland; read its actual display and auth arguments.
+        while :; do
+            for pid in $(pgrep -u "$(id -u)" -x Xwayland); do
+                args=$(tr '\0' '\n' < "/proc/$pid/cmdline")
+                DISPLAY=$(printf '%s\n' "$args" | sed -n '/^:[0-9][0-9]*$/p' | head -n1)
+                XAUTHORITY=$(printf '%s\n' "$args" | sed -n '/^-auth$/{n;p;q;}')
+                [ -n "$DISPLAY" ] && [ -n "$XAUTHORITY" ] && break
+            done
+            [ -n "${DISPLAY:-}" ] && [ -n "${XAUTHORITY:-}" ] && break
+            sleep .2
+        done
+        export DISPLAY XAUTHORITY
+        exec /usr/libexec/gsd-xsettings ;;
+    gsd-*) exec "/usr/libexec/$1" ;;
+    *) exit 2 ;;
+esac

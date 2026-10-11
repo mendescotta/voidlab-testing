@@ -95,6 +95,8 @@ gjs manual
 cjs manual
 python3-gobject manual
 gnome-online-accounts manual
+# Keep 3.56.2's EDS SONAMEs until a coordinated ABI migration is requested.
+evolution-data-server manual
 gnome-bluetooth manual
 gnome-autoar manual
 gspell manual

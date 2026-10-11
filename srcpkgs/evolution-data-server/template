@@ -1,0 +1,89 @@
+# Template file for 'evolution-data-server'
+pkgname=evolution-data-server
+version=3.56.2
+revision=5
+build_style=cmake
+metapackage=yes
+build_helper="gir qemu"
+# Extract UI/development files before moving the remaining runtime to core.
+subpackages="evolution-data-server-gtk3 evolution-data-server-devel evolution-data-server-core"
+depends="evolution-data-server-core>=${version}_${revision} evolution-data-server-gtk3>=${version}_${revision}"
+configure_args="-DSYSCONF_INSTALL_DIR=/etc
+ -DWITH_PHONENUMBER=ON -DENABLE_WEATHER=ON
+ $(vopt_if gir '-DENABLE_INTROSPECTION=ON -DENABLE_VALA_BINDINGS=ON')"
+hostmakedepends="flex glib-devel gperf gettext pkg-config libglib-devel perl
+ $(vopt_if gir vala)"
+makedepends="boost-devel libcanberra-devel libical-devel
+ gnome-online-accounts-devel
+ libsecret-devel mit-krb5-devel libwebkit2gtk41-devel libwebkitgtk60-devel
+ libsoup3-devel libphonenumber-devel $(vopt_if gir vala-devel) gtk4-devel
+ gtk+3-devel libgweather-devel nspr-devel nss-devel"
+checkdepends="dbus"
+short_desc="Centralized access to appointments and contacts"
+maintainer="Orphaned <orphan@voidlinux.org>"
+license="LGPL-2.1-only"
+homepage="https://wiki.gnome.org/Apps/Evolution"
+changelog="https://gitlab.gnome.org/GNOME/evolution-data-server/-/raw/gnome-48/NEWS"
+distfiles="${GNOME_SITE}/evolution-data-server/${version%.*}/evolution-data-server-${version}.tar.xz"
+checksum=df4ec29950f29a76eac6fbe0f814c48d2cef7d3fdb905002a4a883dd761ce93c
+make_check=ci-skip # flaky in CI
+
+build_options="gir"
+build_options_default="gir"
+
+pre_build() {
+	# Only affect g-ir-scanner, which is fine
+	LDFLAGS+=" -Wl,--rpath-link=$wrksrc/build/src/camel"
+	LDFLAGS+=" -Wl,--rpath-link=$wrksrc/build/src/libebackend"
+	LDFLAGS+=" -Wl,--rpath-link=$wrksrc/build/src/libedataserver"
+	LDFLAGS+=" -Wl,--rpath-link=$wrksrc/build/src/private"
+}
+
+# GTK3 UI runtime. The core package keeps the EDS base and GTK4 SONAMEs;
+# these are the only GTK3-linked runtime components in the upstream install.
+evolution-data-server-gtk3_package() {
+	metapackage=no
+	short_desc+=" - GTK3 user interface support"
+	depends="evolution-data-server-core>=${version}_${revision}"
+	pkg_install() {
+		vmove "usr/lib/libedataserverui-1.2.so.*"
+		if [ "$build_option_gir" ]; then
+			vmove usr/lib/girepository-1.0/EDataServerUI-1.2.typelib
+		fi
+		vmove usr/lib/evolution-data-server/registry-modules/module-trust-prompt.so
+		vmove usr/libexec/evolution-data-server/evolution-alarm-notify
+		vmove usr/libexec/evolution-user-prompter
+		vmove etc/xdg/autostart/org.gnome.Evolution-alarm-notify.desktop
+		vmove usr/share/applications/org.gnome.Evolution-alarm-notify.desktop
+		vmove usr/share/dbus-1/services/org.gnome.evolution.dataserver.UserPrompter0.service
+		vmove usr/lib/systemd/user/evolution-user-prompter.service
+	}
+}
+
+evolution-data-server-devel_package() {
+	metapackage=no
+	depends="sqlite-devel mit-krb5-devel nss-devel nspr-devel libical-devel
+	 libsecret-devel libglib-devel libsoup3-devel gtk4-devel gtk+3-devel
+	 evolution-data-server-gtk3>=${version}_${revision}
+	 libxml2-devel evolution-data-server-core>=${version}_${revision}"
+	short_desc+=" - development files"
+	pkg_install() {
+		vmove usr/include
+		vmove usr/lib/pkgconfig
+		vmove "usr/lib/*.so"
+		if [ "$build_option_gir" ]; then
+			vmove usr/share/gir-1.0
+			vmove usr/share/vala
+		fi
+	}
+}
+
+evolution-data-server-core_package() {
+	metapackage=no
+	depends=""
+	short_desc+=" - core services and GTK4 support"
+	pkg_install() {
+		vmove "usr/*"
+		vmove "etc/*"
+	}
+}

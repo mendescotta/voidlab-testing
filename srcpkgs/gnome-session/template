@@ -1,7 +1,7 @@
 # Template file for 'gnome-session'
 pkgname=gnome-session
 version=51.0
-revision=10
+revision=11
 build_style=meson
 configure_args="-Dsystemd=false -Dsystemduserunitdir=/usr/lib/systemd/user"
 hostmakedepends="glib-devel gettext pkg-config xmlto"
@@ -18,6 +18,8 @@ distfiles="${GNOME_SITE}/gnome-session/${version%%.*}/gnome-session-${version}.t
 checksum=5195c4f60542a953ab6ebd288f3785b8e7746292d8c167e0c99d353438a184d1
 
 post_install() {
+	vinstall ${FILESDIR}/dinit-session 755 usr/libexec/gnome-session
+	vinstall ${FILESDIR}/dinit-component 755 usr/libexec/gnome-session
 	vinstall ${FILESDIR}/dbus-run-session-if-needed 755 usr/libexec/gnome-session
 	vsed -i "${DESTDIR}/usr/share/wayland-sessions/gnome.desktop" \
 		-e 's|^Exec=|Exec=/usr/libexec/gnome-session/dbus-run-session-if-needed |'

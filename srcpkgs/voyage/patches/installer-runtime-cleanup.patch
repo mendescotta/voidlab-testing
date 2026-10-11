@@ -1,0 +1,121 @@
+Why: Include verified installer cleanup and runtime-copy fixes after 0.4.4.
+Upstream: https://github.com/mendescotta/voyage/commit/7987364
+Drop when: the next Voyage source release includes these changes.
+
+diff --git a/resources/backend/backend_install.sh b/resources/backend/backend_install.sh
+index 9cb09da..acba0b9 100755
+--- a/resources/backend/backend_install.sh
++++ b/resources/backend/backend_install.sh
+@@ -315,9 +315,13 @@ copy_rootfs() {
+     echo "Copying system files..."
+     # what tar is about to read, so the checkpoints can be shown as a percentage
+     total="$(du -sxb / 2>/dev/null | cut -f1)"
++    # Keep mount points, but leave kernel runtime data and SSH-agent sockets
++    # in the live session. Archive relative paths for extraction into TARGETDIR.
+     tar --create --one-file-system --xattrs \
++        --exclude='./sys/*' \
++        --exclude='./home/*/.ssh/agent' --exclude='./root/.ssh/agent' \
+         --checkpoint=500 --checkpoint-action=echo="@CKPT %u" \
+-        -f - / 2> >(copy_progress_reader "$total") | \
++        -f - -C / . 2> >(copy_progress_reader "$total") | \
+         tar --extract --xattrs --xattrs-include='*' --preserve-permissions -f - -C "$TARGETDIR"
+ 
+     if [ $? -ne 0 ]; then
+@@ -758,7 +762,7 @@ EOF
+ 
+ remove_installer_packages() {
+     local pkg installed=""
+-    for pkg in $(distro_values remove); do
++    for pkg in $(distro_values remove) ${UNUSED_BOOTLOADER_PACKAGES:-}; do
+         chroot "$TARGETDIR" xbps-query "$pkg" >/dev/null 2>&1 && installed="$installed $pkg"
+     done
+     [ -n "$installed" ] || return 0
+@@ -994,13 +998,9 @@ EOF
+ }
+ 
+ remove_unused_bootloaders() {
+-    local pkgs="" pkg
+-    for pkg in "$@"; do
+-        chroot "$TARGETDIR" xbps-query "$pkg" >/dev/null 2>&1 && pkgs="$pkgs $pkg"
+-    done
+-    [ -n "$pkgs" ] || return 0
+-    # -R also removes dependents (grub-*-efi depend on grub); keep stderr visible
+-    chroot "$TARGETDIR" xbps-remove -Ry $pkgs || echo "Warning: could not remove unused bootloaders:$pkgs"
++    # Defer removal until installer cleanup so XBPS resolves dependents and
++    # orphans in one transaction. The chosen bootloader is marked manual first.
++    UNUSED_BOOTLOADER_PACKAGES="$*"
+ }
+ 
+ set_bootloader() {
+diff --git a/src/backend/system_detect.rs b/src/backend/system_detect.rs
+index 87ea077..98cee78 100644
+--- a/src/backend/system_detect.rs
++++ b/src/backend/system_detect.rs
+@@ -42,18 +42,6 @@ pub fn detect_efi() -> bool {
+     Path::new("/sys/firmware/efi").exists()
+ }
+ 
+-/// True for a VirtualBox guest, from the DMI strings it reports ("VirtualBox" / "innotek GmbH").
+-pub fn is_virtualbox(product_name: &str, sys_vendor: &str) -> bool {
+-    product_name.trim().eq_ignore_ascii_case("virtualbox")
+-        || sys_vendor.to_ascii_lowercase().contains("innotek")
+-}
+-
+-pub fn detect_virtualbox() -> bool {
+-    let read =
+-        |name: &str| fs::read_to_string(format!("/sys/class/dmi/id/{name}")).unwrap_or_default();
+-    is_virtualbox(&read("product_name"), &read("sys_vendor"))
+-}
+-
+ pub fn has_internet(timeout: Duration) -> bool {
+     for url in [
+         "https://repo-default.voidlinux.org/",
+@@ -722,22 +710,6 @@ mod tests {
+           "children":[{"name":"sdc1","size":"8G","type":"part","fstype":"iso9660","mountpoint":"/run/initramfs/live"}]}]}"#;
+         assert!(parse_disks(json)[0].live_medium);
+     }
+-
+-    #[test]
+-    fn virtualbox_is_recognised_from_the_dmi_strings() {
+-        assert!(is_virtualbox("VirtualBox\n", "innotek GmbH\n"));
+-        assert!(is_virtualbox("VirtualBox", ""));
+-        assert!(is_virtualbox("", "innotek GmbH"));
+-        assert!(is_virtualbox("virtualbox", "Oracle Corporation"));
+-    }
+-
+-    #[test]
+-    fn other_machines_are_not_virtualbox() {
+-        assert!(!is_virtualbox("KVM", "QEMU"));
+-        assert!(!is_virtualbox("VMware Virtual Platform", "VMware, Inc."));
+-        assert!(!is_virtualbox("ThinkPad X1", "LENOVO"));
+-        assert!(!is_virtualbox("", ""));
+-    }
+ }
+ 
+ #[cfg(test)]
+diff --git a/src/ui/pages/mirrors.rs b/src/ui/pages/mirrors.rs
+index ac4a20b..5cb54f1 100644
+--- a/src/ui/pages/mirrors.rs
++++ b/src/ui/pages/mirrors.rs
+@@ -120,8 +120,3 @@ pub struct MirrorsFields {
+     pub hw_drivers: bool,
+     pub driver_set: DriverSet,
+ }
+-
+-#[cfg(test)]
+-mod tests {
+-    use super::*;
+-}
+diff --git a/src/ui/pages/review.rs b/src/ui/pages/review.rs
+index d38a49b..322f4db 100644
+--- a/src/ui/pages/review.rs
++++ b/src/ui/pages/review.rs
+@@ -363,7 +363,7 @@ mod tests {
+         assert_eq!(edit_page("Nonfree repository"), Some(MIRRORS));
+         assert_eq!(edit_page("User shell"), Some(USERS));
+         assert_eq!(edit_page("Root shell"), Some(USERS));
+-        assert_eq!(edit_page("VirtualBox guest additions"), Some(MIRRORS));
++        assert_eq!(edit_page("Hardware drivers"), Some(MIRRORS));
+         assert_eq!(edit_page("Bootloader"), Some(DISKS));
+         assert_eq!(edit_page("Something new"), None);
+     }
