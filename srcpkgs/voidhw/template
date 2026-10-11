@@ -1,6 +1,6 @@
 # Template file for 'voidhw'
 pkgname=voidhw
-version=0.1.2
+version=0.1.3
 revision=1
 build_style=cargo
 short_desc="Hardware-aware driver and firmware selection for Void Linux"

@@ -1,6 +1,6 @@
 # Template file for 'vessel'
 pkgname=vessel
-version=0.1.0
+version=0.1.1
 revision=3
 build_style=cargo
 hostmakedepends="pkg-config"
