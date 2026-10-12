@@ -6,7 +6,7 @@ templates, plus a signed binary repository (x86_64, glibc).
 ## Install packages
 
 ```sh
-echo 'repository=https://github.com/mendescotta/voidlab/releases/download/repo' |
+echo 'repository=https://github.com/mendescotta/voidlab-testing/releases/download/repo' |
     sudo tee /etc/xbps.d/20-voidlab.conf
 echo 'bestmatching=true' | sudo tee -a /etc/xbps.d/20-voidlab.conf
 sudo xbps-install -S          # accept the voidlab signing key when asked
@@ -30,8 +30,8 @@ Templates live in `srcpkgs/`. To use a local build instead of the release, set
 
 ## Packages
 
-[packages.md](packages.md) lists every template with its version here, in
-official Void and upstream. Regenerate with `./voidlab packages > packages.md`.
+[PACKAGES.md](PACKAGES.md) lists every template with its version here, in
+official Void and upstream. Regenerate with `./voidlab packages > PACKAGES.md`.
 
 ## CI
 

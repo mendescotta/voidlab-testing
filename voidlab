@@ -16,7 +16,7 @@ DIST=$ROOT/dist
 # Template folders kept in sibling repos (voidlands); one dir with a `template` each.
 EXTRA_SRCPKGS=${VOIDLAB_EXTRA_SRCPKGS:-$ROOT/../voidlands}
 KEY=${VOIDLAB_KEY:-$HOME/.config/voidlab/privkey.pem}
-GH_REPO=${VOIDLAB_GH_REPO:-mendescotta/voidlab}
+GH_REPO=${VOIDLAB_GH_REPO:-mendescotta/voidlab-testing}
 RELEASE_TAG=${VOIDLAB_RELEASE_TAG:-repo}
 UPSTREAM_URL=${VOIDLAB_UPSTREAM_URL:-https://github.com/void-linux/void-packages}
 # How each template is updated: `<pkg> <tier>` per line, `#` comments. Tiers: auto (bump, build, merge,

@@ -24,7 +24,7 @@ out=$("$R/voidlab" pull 2>&1)
 assert_grep "pull reports the count"             '^=> pulled 1 packages$' <(echo "$out")
 assert_file "package lands in repo/"             "$R/repo/p-1.0_1.noarch.xbps"
 assert_file "release repodata is kept for update" "$R/.release/x86_64-repodata"
-assert_grep "gh is asked for the repo release"   'release download repo -R mendescotta/voidlab' "$T/gh.log"
+assert_grep "gh is asked for the repo release"   'release download repo -R mendescotta/voidlab-testing' "$T/gh.log"
 got=$(XBPS_ARCH=x86_64 xbps-query -i -R --repository="$R/repo" -p pkgver p)
 assert_eq   "repo/ is indexed with the pulled package" "$got" "p-1.0_1"
 
