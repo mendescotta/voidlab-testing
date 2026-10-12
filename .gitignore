@@ -2,6 +2,7 @@
 hostdir/
 masterdir/
 repo/
+repo-archive/
 .superpowers/
 DEVNOTES.md
 dist/
