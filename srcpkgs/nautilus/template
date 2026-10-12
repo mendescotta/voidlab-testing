@@ -1,11 +1,11 @@
 # Template file for 'nautilus'
 pkgname=nautilus
-version=51.0.1
+version=51.1
 revision=1
 build_style=meson
 build_helper="gir"
 configure_args="-Dtests=headless -Dintrospection=$(vopt_if gir true false)
- -Dselinux=disabled"
+ -Dselinux=disabled -Dcloudproviders=disabled"
 hostmakedepends="gettext glib-devel libxslt pkg-config desktop-file-utils
  localsearch gtk4-update-icon-cache wayland-devel blueprint-compiler"
 makedepends="exempi-devel gnome-autoar-devel gnome-desktop-devel gtk4-devel
@@ -22,7 +22,7 @@ homepage="https://wiki.gnome.org/Nautilus"
 #changelog="https://gitlab.gnome.org/GNOME/nautilus/-/raw/main/NEWS"
 changelog="https://gitlab.gnome.org/GNOME/nautilus/-/raw/gnome-49/NEWS"
 distfiles="${GNOME_SITE}/nautilus/${version%%.*}/nautilus-${version}.tar.xz"
-checksum=a00db908fd65026cbd5dc634e12d189de8eba2b03f105d2425341768a5ee92fb
+checksum=a703bc152d18d161d9dab957e2390a36e6246bb5c24de7b15c9624fcfa2f2816
 
 build_options="gir"
 build_options_default="gir"
