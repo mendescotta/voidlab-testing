@@ -1,9 +1,5 @@
 # CLAUDE.md
 
-Behavioral guidelines for LLM-assisted work on **slpkgs** — the package
-collection for Sunlight Linux, a fork of
-[void-packages](https://github.com/void-linux/void-packages) (`xbps-src`
-templates), rebranded from Void to Sunlight Linux.
 
 > Derived from [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills)
 > (MIT), based on [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876)
@@ -11,13 +7,12 @@ templates), rebranded from Void to Sunlight Linux.
 > supply-chain caution, and keeping a small, mergeable delta from upstream
 > void-packages.
 
-> **Status:** early bootstrap. The repo will be based on a void-packages fork
-> with the Sunlight rebrand. Upstream's `Manual.md`, `srcpkgs/`, `common/`, and
+> Upstream's `Manual.md`, `srcpkgs/`, `common/`, and
 > `xbps-src` are authoritative for *how packaging works*.
 
 **Tradeoff:** These guidelines bias toward caution over speed. Templates run
 shell on builders and decide what lands in users' systems (supply chain), and a
-large rebrand delta makes every upstream sync painful. When in doubt, match
+large delta makes every upstream sync painful. When in doubt, match
 upstream and ask.
 
 See [EXAMPLES.md](EXAMPLES.md) for concrete examples grounded in `xbps-src`
