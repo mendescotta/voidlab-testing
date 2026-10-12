@@ -1,7 +1,7 @@
 # Template file for 'gnome-initial-setup'
 pkgname=gnome-initial-setup
-version=51.0
-revision=2
+version=51.1
+revision=1
 build_style=meson
 configure_args="-Dparental_controls=disabled"
 hostmakedepends="pkg-config glib-devel gettext dconf"
@@ -18,6 +18,6 @@ license="GPL-2.0-or-later"
 homepage="https://wiki.gnome.org/Design/OS/InitialSetup"
 changelog="https://gitlab.gnome.org/GNOME/gnome-initial-setup/-/raw/master/NEWS"
 distfiles="${GNOME_SITE}/gnome-initial-setup/${version%%.*}/gnome-initial-setup-${version}.tar.xz"
-checksum=22a1b61fccf9e4da9f925452984e458d85b34323f4399125cd36854f5eb66cc4
+checksum=5883085d341b2ecff6e01cc7cb1ad42f2f3d2cff4c43144b47542c806fd6e682
 
 system_groups="gnome-initial-setup"
