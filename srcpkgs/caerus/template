@@ -3,7 +3,7 @@
 # To use: copy or symlink this directory to <void-packages checkout>/srcpkgs/caerus,
 # then from inside that checkout: ./xbps-src pkg caerus
 pkgname=caerus
-version=0.7.1
+version=0.7.2
 revision=1
 wrksrc="Caerus-${version}"
 build_style=cargo
@@ -15,7 +15,7 @@ maintainer="mendescotta <mendescotta@gmail.com>"
 license="GPL-3.0-or-later"
 homepage="https://github.com/mendescotta/Caerus"
 distfiles="https://github.com/mendescotta/Caerus/archive/refs/tags/v${version}.tar.gz"
-checksum=f6ab735c6d20df86996901b948eb9bc3cceb56a79fd75265ffde88a2cbef3ced
+checksum=d59fb9b0941a58d42e6af2241ec9f2fa804dd61fc8ae64666068b3270c77efe4
 
 do_install() {
 	vbin target/${RUST_TARGET}/release/caerus
