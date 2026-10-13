@@ -1,11 +1,7 @@
 # Template file for 'caerus'
-#
-# To use: copy or symlink this directory to <void-packages checkout>/srcpkgs/caerus,
-# then from inside that checkout: ./xbps-src pkg caerus
 pkgname=caerus
 version=0.7.2
-revision=1
-wrksrc="Caerus-${version}"
+revision=2
 build_style=cargo
 hostmakedepends="pkg-config clang"
 makedepends="gtk4-devel libxbps-devel glib-devel"
@@ -34,6 +30,4 @@ do_install() {
 		rel="${svg#caerus/data/icons/hicolor/}"
 		vinstall "${svg}" 644 "usr/share/icons/hicolor/$(dirname "${rel}")"
 	done
-
-	vlicense LICENSE
 }

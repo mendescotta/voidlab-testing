@@ -4,7 +4,6 @@ version=1.28.8
 revision=1
 build_style=meson
 build_helper="qmake qmake6"
-qmake_default_version=none
 configure_args="-Ddv=disabled -Ddv1394=disabled -Dshout2=disabled -Dqt5=enabled
  -Dqt6=enabled $(vopt_feature wayland qt-wayland) -Dqt-method=qmake
  $(vopt_feature gtk3 gtk3) -Dpkgconfig.relocatable=true"
@@ -28,6 +27,7 @@ homepage="https://gstreamer.freedesktop.org"
 changelog="https://gstreamer.freedesktop.org/releases/${version%.*}/#${version}"
 distfiles="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-${version}.tar.xz"
 checksum=a7670ed900d3d03be744d25c1873b239896e9a82ce6d17f8febc6fffbaee9521
+qmake_default_version=none
 
 build_options="gtk3 wayland"
 build_options_default="gtk3 wayland"

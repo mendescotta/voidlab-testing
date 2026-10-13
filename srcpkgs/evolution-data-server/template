@@ -3,11 +3,8 @@ pkgname=evolution-data-server
 version=3.56.2
 revision=5
 build_style=cmake
-metapackage=yes
 build_helper="gir qemu"
-# Extract UI/development files before moving the remaining runtime to core.
-subpackages="evolution-data-server-gtk3 evolution-data-server-devel evolution-data-server-core"
-depends="evolution-data-server-core>=${version}_${revision} evolution-data-server-gtk3>=${version}_${revision}"
+metapackage=yes
 configure_args="-DSYSCONF_INSTALL_DIR=/etc
  -DWITH_PHONENUMBER=ON -DENABLE_WEATHER=ON
  $(vopt_if gir '-DENABLE_INTROSPECTION=ON -DENABLE_VALA_BINDINGS=ON')"
@@ -18,6 +15,7 @@ makedepends="boost-devel libcanberra-devel libical-devel
  libsecret-devel mit-krb5-devel libwebkit2gtk41-devel libwebkitgtk60-devel
  libsoup3-devel libphonenumber-devel $(vopt_if gir vala-devel) gtk4-devel
  gtk+3-devel libgweather-devel nspr-devel nss-devel"
+depends="evolution-data-server-core>=${version}_${revision} evolution-data-server-gtk3>=${version}_${revision}"
 checkdepends="dbus"
 short_desc="Centralized access to appointments and contacts"
 maintainer="Orphaned <orphan@voidlinux.org>"
@@ -26,6 +24,8 @@ homepage="https://wiki.gnome.org/Apps/Evolution"
 changelog="https://gitlab.gnome.org/GNOME/evolution-data-server/-/raw/gnome-48/NEWS"
 distfiles="${GNOME_SITE}/evolution-data-server/${version%.*}/evolution-data-server-${version}.tar.xz"
 checksum=df4ec29950f29a76eac6fbe0f814c48d2cef7d3fdb905002a4a883dd761ce93c
+# Extract UI/development files before moving the remaining runtime to core.
+subpackages="evolution-data-server-gtk3 evolution-data-server-devel evolution-data-server-core"
 make_check=ci-skip # flaky in CI
 
 build_options="gir"
