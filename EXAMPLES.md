@@ -1,12 +1,11 @@
 # EXAMPLES.md
 
 Concrete examples for each of the four principles in [CLAUDE.md](CLAUDE.md),
-grounded in real slpkgs scenarios (`xbps-src` templates, the rebrand, upstream
+grounded in real scenarios (`xbps-src` templates, upstream
 syncs). Snippets use the template shell format and diffs.
 
 > Derived from [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills)
-> (MIT). Examples rewritten for xbps-src packaging + slpkgs.
-
+> (MIT). Examples rewritten for xbps-src packaging
 ---
 
 ## 1. Think Before Coding
@@ -224,10 +223,10 @@ Change only the intended branding string in the intended file:
  # srcpkgs/base-files/files/os-release
 -NAME="Void"
 -PRETTY_NAME="Void Linux"
-+NAME="Sunlight"
++NAME="Voidlab"
 +PRETTY_NAME="Sunlight Linux"
 -HOME_URL="https://voidlinux.org/"
-+HOME_URL="https://sunlightlinux.org/"
++HOME_URL="https://voidlinux.org/"
 ```
 
 The rebrand stays concentrated; package names and upstream references are
@@ -282,8 +281,7 @@ Plan:
    git remote add upstream https://github.com/void-linux/void-packages.git
    git fetch upstream
    Verify: upstream/master is available.
-2. Merge; resolve conflicts only in the rebranded packages (base-files, GRUB,
-   efibootmgr, …) — keep Sunlight branding, take upstream elsewhere.
+2. Merge; resolve conflicts only in the custom templates ahead of void's, take upstream elsewhere.
    Verify: git diff shows the rebrand intact and a small delta.
 3. Rebuild the packages touched by the merge.
    Verify: ./xbps-src pkg <changed> succeeds; xlint clean.
@@ -301,7 +299,6 @@ Each step is checkable; the concentrated rebrand is what makes step 2 tractable.
 |---|---|---|
 | Think Before Coding | Bare `do_build(){ make }` for "add package foo" | Ask build system + deps + source/checksum; use a `build_style` |
 | Simplicity First | Hand-written cmake `do_*` steps | `build_style=cmake` |
-| Surgical Changes | `sed -i s/void/sunlight/g` across `srcpkgs/` | Change only the intended branding string in the intended file |
 | Goal-Driven | Pile of `hostmakedepends` on a hunch for a build failure | Reproduce in a clean masterdir; add the one missing dep |
 
 ## Key Insight
@@ -315,7 +312,7 @@ conflict storm.
 
 - Match upstream void-packages idiom; the smaller the diff, the easier the
   merges.
-- Keep the rebrand concentrated; never mass-rename `void` → `sunlight`.
+- Keep the rebrand concentrated; never mass-rename `void` → `voidlab`.
 - The real test is `./xbps-src pkg` in a clean masterdir, plus `xlint`.
 
 **Good slpkgs changes are the smallest template/rebrand delta that solves the
