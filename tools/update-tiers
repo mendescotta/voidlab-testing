@@ -22,6 +22,7 @@ voidhw review
 runit-settingsd review
 dinit-settingsd review
 otto review
+pilot review
 # --- review: applications, themes and fonts (no ABI impact)
 eog review
 evince review
