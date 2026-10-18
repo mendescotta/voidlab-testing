@@ -3,11 +3,8 @@ pkgname=voyage
 version=0.4.7
 revision=1
 build_style=cargo
-# Local test build: libadwaita widgets/palette instead of plain GTK4 (see
-# voyage/Cargo.toml's "adwaita" feature, off by default upstream).
-make_build_args="--features adwaita"
 hostmakedepends="pkg-config"
-makedepends="gtk4-devel glib-devel libadwaita-devel"
+makedepends="gtk4-devel glib-devel"
 depends="polkit parted gptfdisk efibootmgr dosfstools e2fsprogs xmirror"
 short_desc="GTK4 installer for Void Linux built on the void-installer backend"
 maintainer="mendescotta <mendescotta@gmail.com>"
