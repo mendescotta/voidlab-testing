@@ -16,6 +16,13 @@ assert_grep "manual is listed"          "^m${tab}manual\$" <(echo "$out")
 assert_grep "unlisted is notify"        "^n${tab}notify\$" <(echo "$out")
 assert_eq   "one line per template"     "$(wc -l <<<"$out")" "4"
 
+# symlinked subpackages and directories without a template are not overlay templates
+ln -s a "$R/srcpkgs/a-sub"; mkdir "$R/srcpkgs/notmpl"
+out=$(cd "$R" && ./voidlab tiers)
+assert_eq   "symlink and template-less dir skipped" "$(wc -l <<<"$out")" "4"
+assert_eq   "symlink not listed"        "$(grep -c '^a-sub' <<<"$out" || true)" "0"
+rm "$R/srcpkgs/a-sub"; rmdir "$R/srcpkgs/notmpl"
+
 # a typo in a tier must stop everything, not silently demote a package
 printf 'a auto\nr reveiw\n' > "$R/tools/update-tiers"
 out=$(cd "$R" && ./voidlab tiers 2>&1) && rc=0 || rc=$?
