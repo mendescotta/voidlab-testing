@@ -1,0 +1,38 @@
+Why: Ship Turnstile and UPower services and order user-session management before logins.
+Upstream: https://github.com/mendescotta/dinit-void
+Drop when: the next dinit-void release includes these services and user-session ordering.
+
+--- a/Makefile
++++ b/Makefile
+@@ -14,7 +14,7 @@
+ 	filesystems swap misc random-seed sysctl cleanup rcboot network-online shutdown-hook shutdown power
+ DAEMONS = dhcpcd sshd ssh-keygen dbus elogind polkitd NetworkManager lightdm gdm sddm \
+ 	cosmic-greeter-daemon cosmic-greeter chronyd vmtoolsd vmware-vmblock-fuse vboxservice \
+-	spice-vdagentd power-profiles-daemon switcheroo-control wpa_supplicant acpid bluetoothd rtkit
++	spice-vdagentd power-profiles-daemon switcheroo-control wpa_supplicant acpid bluetoothd rtkit turnstiled upower
+ TTYS = tty1 tty2 tty3 tty4 tty5 tty6 ttyS0
+ PROGS = seedrng halt dbus-wait-for
+ 
+@@ -30,6 +30,7 @@
+ # what both packages ship: early boot, the shutdown hook, the daemon services and their helpers
+ install: all
+ 	install -d $(DESTDIR)$(DINITLIB) $(DESTDIR)$(DINITSRV) $(DESTDIR)$(DINITETC)/boot.d $(DESTDIR)$(LIBEXEC)
++	install -d $(DESTDIR)$(DINITSRV)/user/boot.d
+ 	install -m644 scripts/functions misc/crypt.awk $(DESTDIR)$(DINITLIB)/
+ 	for s in $(SCRIPTS); do install -m755 scripts/$$s $(DESTDIR)$(DINITLIB)/$$s; done
+ 	install -m755 misc/modules-load seedrng halt $(DESTDIR)$(DINITLIB)/
+--- /dev/null
++++ b/void/turnstiled.service
+@@ -0,0 +1,5 @@
++type = process
++command = /usr/bin/turnstiled
++log-type = buffer
++depends-on: elogind
++before: loginready
+--- /dev/null
++++ b/void/upower.service
+@@ -0,0 +1,4 @@
++type = process
++command = /usr/libexec/upowerd
++log-type = buffer
++depends-on: dbus

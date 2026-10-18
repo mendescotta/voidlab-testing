@@ -1,13 +1,13 @@
 # Template file for 'mutter'
 pkgname=mutter
-version=51.0
+version=51.1
 revision=1
 build_helper="gir"
 build_style=meson
 configure_args="-Dprofiler=false -Dintrospection=true -Dxwayland_path=/usr/bin/Xwayland
- -Dxwayland_initfd=disabled -Dtests=disabled"
-hostmakedepends="gettext glib-devel pkg-config zenity wayland-devel xorg-server
- xorg-server-xwayland python3-argcomplete python3-docutils"
+ -Dxwayland_initfd=disabled -Dtests=disabled $(vopt_bool xwayland xwayland)"
+hostmakedepends="gettext glib-devel pkg-config zenity wayland-devel libxcvt
+ $(vopt_if xwayland 'xorg-server xorg-server-xwayland') python3-argcomplete python3-docutils"
 makedepends="elogind-devel glib-devel gnome-desktop-devel graphene-devel
  json-glib-devel libglib-devel libSM-devel libXtst-devel libcanberra-devel
  libinput-devel MesaLib-devel pipewire-devel startup-notification-devel gtk4-devel
@@ -21,10 +21,12 @@ homepage="https://wiki.gnome.org/Projects/Mutter/"
 #changelog="https://gitlab.gnome.org/GNOME/mutter/-/raw/main/NEWS"
 changelog="https://gitlab.gnome.org/GNOME/mutter/-/raw/gnome-50/NEWS"
 distfiles="${GNOME_SITE}/mutter/${version%%.*}/mutter-${version}.tar.xz"
-checksum=5d28f3ae225692428fcafb96500d673f34328b698b86960c9c1460d0b1d983b3
+checksum=0d311d87901dbcb94518fb89304febe30852ce5d8a4befa9f87e85c68eceefde
 shlib_provides="libmutter-clutter-51.so libmutter-cogl-51.so
  libmutter-mtk-51.so"
 make_check=no # needs a full graphical session
+build_options="xwayland"
+build_options_default="xwayland"
 
 # Upstream keeps pulling generated headers even though it can cause race
 # conditions in meson/ninja

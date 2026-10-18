@@ -1,9 +1,9 @@
 # Template file for 'gnome-settings-daemon'
 pkgname=gnome-settings-daemon
-version=51.0
+version=51.1
 revision=1
 build_style=meson
-configure_args="-Dsystemd=false -Delogind=true"
+configure_args="-Dsystemd=false -Delogind=true $(vopt_bool xwayland xwayland)"
 hostmakedepends="cmake docbook-xsl gettext glib-devel libglib-devel libxslt
  perl pkg-config polkit"
 makedepends="NetworkManager-devel alsa-lib-devel colord-devel cups-devel gcr4-devel
@@ -21,8 +21,10 @@ license="GPL-3.0-or-later"
 homepage="https://gitlab.gnome.org/GNOME/gnome-settings-daemon"
 changelog="https://gitlab.gnome.org/GNOME/gnome-settings-daemon/-/raw/master/NEWS"
 distfiles="${GNOME_SITE}/gnome-settings-daemon/${version%.*}/gnome-settings-daemon-${version}.tar.xz"
-checksum=7c6249118ddfffc4bb34d6b3edaa86b3ea02a1ad2b7711d79480749906767665
+checksum=e7de8d30ae2d63c7a9a21f8f0247219275cbc1d7f5ed09205e4a47642666f6ae
 CFLAGS="-UG_DISABLE_ASSERT"
+build_options="xwayland"
+build_options_default="xwayland"
 
 gnome-settings-daemon-devel_package() {
 	depends="libglib-devel"

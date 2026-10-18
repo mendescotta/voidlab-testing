@@ -2,7 +2,7 @@
 pkgname=dinit-void
 reverts="0.99.25_1 0.99.25_2 0.99.25_3 0.99.25_4 0.99.25_5 0.99.25_6 0.99.25_7 0.99.25_8 0.99.25_9 0.99.25_10"
 version=0.1.1
-revision=1
+revision=3
 # Void's boot on dinit (mendescotta/dinit-void): void-runit's early boot and shutdown as dinit
 # services, plus the services for Void's daemons. 0.1 replaces the dinit-chimera based 0.99.25
 # builds (hence reverts, which 0.1.x still needs: it sorts below 0.99.25); nothing from Chimera is used.
@@ -24,7 +24,8 @@ homepage="https://github.com/mendescotta/dinit-void"
 distfiles="https://github.com/mendescotta/dinit-void/archive/v${version}.tar.gz"
 checksum=679623491ec3b6fd180ce976d5e7ce67336b470b5029d207621c023716c1b95a
 conflicts="runit-void>=0 dinit-void-core>=0"
-make_dirs="/etc/dinit.d/boot.d 0755 root root"
+make_dirs="/etc/dinit.d/boot.d 0755 root root
+ /usr/lib/dinit.d/user/boot.d 0755 root root"
 
 post_install() {
 	vlicense COPYING
@@ -36,7 +37,8 @@ dinit-void-core_package() {
 	short_desc+=" - lab flavour for a runit host (no init or power commands)"
 	depends="dinit eudev kmod kbd util-linux iproute2 procps-ng"
 	conflicts="dinit-void>=0"
-	make_dirs="/etc/dinit.d/boot.d 0755 root root"
+	make_dirs="/etc/dinit.d/boot.d 0755 root root
+ /usr/lib/dinit.d/user/boot.d 0755 root root"
 	pkg_install() {
 		local d f
 		# a copy of everything dinit-void ships, minus what runit-void owns

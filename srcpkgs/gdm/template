@@ -1,14 +1,14 @@
 # Template file for 'gdm'
 pkgname=gdm
-version=51.0
-revision=3
+version=51.1
+revision=1
 build_helper="gir"
 build_style=meson
 configure_args="
  -Ddefault-pam-config=arch -Dat-spi-registryd-dir=/usr/libexec
  -Dplymouth=enabled -Dpid-file=/run/gdm/gdm.pid
- -Dsystemd-journal=false -Dinitial-vt=7 -Dx11-support=true
- -Dselinux=disabled -Dlibaudit=disabled -Dgdm-xsession=true
+ -Dsystemd-journal=false -Dinitial-vt=7 $(vopt_bool x11 x11-support)
+ -Dselinux=disabled -Dlibaudit=disabled $(vopt_bool x11 gdm-xsession)
  -Ddefault-path=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin:/sbin:/bin
  -Dsystemdsystemunitdir=/usr/lib/systemd/system
  -Dsystemduserunitdir=/usr/lib/systemd/user
@@ -17,8 +17,8 @@ hostmakedepends="dconf gettext itstool pkg-config"
 makedepends="accountsservice-devel elogind-devel gettext-devel glib-devel
  iso-codes libSM-devel libcanberra-devel nss-devel pam-devel upower-devel
  plymouth-devel libgudev-devel polkit-devel"
-depends="gnome-settings-daemon gnome-shell gnome-session gnome-themes-extra
- gsettings-desktop-schemas xorg-server xorg-server-xwayland xrdb"
+depends="gnome-settings-daemon gnome-shell gnome-session gsettings-desktop-schemas
+ $(vopt_if x11 'xorg-server xorg-server-xwayland xrdb')"
 checkdepends="check-devel"
 short_desc="GNOME Display Manager"
 maintainer="Orphaned <orphan@voidlinux.org>"
@@ -28,7 +28,7 @@ homepage="https://wiki.gnome.org/Projects/GDM"
 #changelog="https://gitlab.gnome.org/GNOME/gdm/-/raw/gnome-48/NEWS"
 changelog="https://gitlab.gnome.org/GNOME/gdm/-/raw/main/NEWS"
 distfiles="${GNOME_SITE}/gdm/${version%%.*}/gdm-${version}.tar.xz"
-checksum=2ce5acf5a438b8f6dc1d14fd777a911be5eeb2f7ab9a7c4600166205b15d6536
+checksum=27970ad4f58eb0a48fb01bffb89a8f472503641c3573eb6d788ad4042de01120
 
 conf_files="
 	/etc/gdm/custom.conf
@@ -50,8 +50,8 @@ system_accounts="gdm"
 gdm_homedir="/var/lib/gdm"
 
 # Package build options
-build_options="gir"
-build_options_default="gir"
+build_options="gir x11"
+build_options_default="gir x11"
 
 if [ "$CROSS_BUILD" ]; then
 	hostmakedepends+=" glib-devel pam-devel"
@@ -68,13 +68,11 @@ post_install() {
 		fi
 	done
 
-	# Without this profile, the greeter's dconf lookups against the
-	# missing 'gdm' system-db segfault in libpcre2 instead of falling
-	# back cleanly.
+	# Use the shipped greeter defaults without requiring an administrator
+	# to create a compiled /etc/dconf/db/gdm database.
 	vmkdir etc/dconf/profile
 	cat > "${DESTDIR}/etc/dconf/profile/gdm" <<-EOF
 		user-db:user
-		system-db:gdm
 		file-db:/usr/share/gdm/greeter-dconf-defaults
 	EOF
 
