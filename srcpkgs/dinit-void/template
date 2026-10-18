@@ -2,7 +2,7 @@
 pkgname=dinit-void
 reverts="0.99.25_1 0.99.25_2 0.99.25_3 0.99.25_4 0.99.25_5 0.99.25_6 0.99.25_7 0.99.25_8 0.99.25_9 0.99.25_10"
 version=0.1.1
-revision=3
+revision=4
 # Void's boot on dinit (mendescotta/dinit-void): void-runit's early boot and shutdown as dinit
 # services, plus the services for Void's daemons. 0.1 replaces the dinit-chimera based 0.99.25
 # builds (hence reverts, which 0.1.x still needs: it sorts below 0.99.25); nothing from Chimera is used.

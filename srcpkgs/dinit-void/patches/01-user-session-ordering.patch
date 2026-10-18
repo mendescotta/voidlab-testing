@@ -1,6 +1,6 @@
-Why: Ship Turnstile and UPower services and order user-session management before logins.
+Why: Ship the UPower service and create the user-service boot directory.
 Upstream: https://github.com/mendescotta/dinit-void
-Drop when: the next dinit-void release includes these services and user-session ordering.
+Drop when: the next dinit-void release includes the UPower service and user-service boot directory.
 
 --- a/Makefile
 +++ b/Makefile
@@ -9,7 +9,7 @@ Drop when: the next dinit-void release includes these services and user-session 
  DAEMONS = dhcpcd sshd ssh-keygen dbus elogind polkitd NetworkManager lightdm gdm sddm \
  	cosmic-greeter-daemon cosmic-greeter chronyd vmtoolsd vmware-vmblock-fuse vboxservice \
 -	spice-vdagentd power-profiles-daemon switcheroo-control wpa_supplicant acpid bluetoothd rtkit
-+	spice-vdagentd power-profiles-daemon switcheroo-control wpa_supplicant acpid bluetoothd rtkit turnstiled upower
++	spice-vdagentd power-profiles-daemon switcheroo-control wpa_supplicant acpid bluetoothd rtkit upower
  TTYS = tty1 tty2 tty3 tty4 tty5 tty6 ttyS0
  PROGS = seedrng halt dbus-wait-for
  
@@ -21,14 +21,6 @@ Drop when: the next dinit-void release includes these services and user-session 
  	install -m644 scripts/functions misc/crypt.awk $(DESTDIR)$(DINITLIB)/
  	for s in $(SCRIPTS); do install -m755 scripts/$$s $(DESTDIR)$(DINITLIB)/$$s; done
  	install -m755 misc/modules-load seedrng halt $(DESTDIR)$(DINITLIB)/
---- /dev/null
-+++ b/void/turnstiled.service
-@@ -0,0 +1,5 @@
-+type = process
-+command = /usr/bin/turnstiled
-+log-type = buffer
-+depends-on: elogind
-+before: loginready
 --- /dev/null
 +++ b/void/upower.service
 @@ -0,0 +1,4 @@
