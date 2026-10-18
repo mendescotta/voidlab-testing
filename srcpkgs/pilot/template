@@ -1,6 +1,6 @@
 # Template file for 'pilot'
 pkgname=pilot
-version=0.1.0
+version=0.1.1
 revision=1
 build_style=cargo
 hostmakedepends="pkg-config"
@@ -11,7 +11,7 @@ maintainer="mendescotta <mendescotta@gmail.com>"
 license="MIT"
 homepage="https://github.com/mendescotta/pilot"
 distfiles="https://github.com/mendescotta/pilot/archive/refs/tags/v${version}.tar.gz"
-checksum=e9c340c7425e27e6afca28d5890821dfb2bad5230862ead171865bb4b1925558
+checksum=46a587b626af0bfb10c6db17721a07381fee9a8fb5b2bb515114569a68050d45
 # Turnstile's dinit backend expects this directory to exist (see dinit-void's own identical
 # /etc/dinit.d/boot.d case); make_dirs creates it via package metadata at install time instead of
 # shipping it in the package itself, since xbps-src's post-install hook strips empty directories.

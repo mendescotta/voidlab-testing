@@ -18,7 +18,7 @@ Tier is the auto-update tier (see docs/ci.md). ⬆ marks a newer upstream releas
 | at-spi2-core | 2.62.1_1 | 2.56.5_1 | 2.62.1 | manual | newer than Void |
 | baobab | 50.0_1 | 48.0_1 | 50.0 | auto | newer than Void |
 | base-system-dinit | 0.1_5 |  | 0.1 | notify | not in Void |
-| caerus | 0.7.2_2 |  | 0.7.2 | review | not in Void |
+| caerus | 0.7.3_1 |  | 0.7.3 | review | not in Void |
 | cinnamon | 6.6.9_2 | 6.6.7_1 | 6.6.9 | manual | newer than Void |
 | cinnamon-session | 6.6.4_1 | 6.6.3_1 | 6.6.4 | manual | newer than Void |
 | cinnamon-settings-daemon | 6.6.4_1 | 6.6.3_1 | 6.6.4 | manual | newer than Void |
@@ -127,7 +127,7 @@ Tier is the auto-update tier (see docs/ci.md). ⬆ marks a newer upstream releas
 | pam | 1.7.3_1 | 1.5.3_4 | 1.7.3 | manual | newer than Void |
 | pango | 1.58.2_1 | 1.56.3_2 | 1.58.2 | manual | newer than Void |
 | pangomm | 2.46.5_1 | 2.46.2_1 | 2.46.5 | manual | newer than Void |
-| pilot | 0.1.0_1 |  | 0.1.0 | review | not in Void |
+| pilot | 0.1.1_1 |  | 0.1.1 | review | not in Void |
 | pix | 3.4.11_1 |  | 3.4.11 | auto | not in Void |
 | pop-fonts | 2021.08.25_1 |  | 2021.08.25 | review | not in Void |
 | pop-launcher | 1.10.0_1 |  | 1.10.0 | manual | not in Void |
@@ -140,9 +140,9 @@ Tier is the auto-update tier (see docs/ci.md). ⬆ marks a newer upstream releas
 | tecla | 51.0_1 | 50.0_1 | 51.0 | review | newer than Void |
 | tinysparql | 3.12.0_1 | 3.11.0_1 | 3.12.0 | manual | newer than Void |
 | totem-pl-parser | 3.26.7_1 | 3.26.6_1 | 3.26.7 | review | newer than Void |
-| vessel | 0.1.1_3 |  | 0.1.1 | review | not in Void |
+| vessel | 0.1.3_1 |  | 0.1.3 | review | not in Void |
 | voidhw | 0.1.3_1 |  | 0.1.3 | review | not in Void |
-| voyage | 0.4.4_2 |  | 0.4.4 | review | not in Void |
+| voyage | 0.4.7_1 |  | 0.4.7 | review | not in Void |
 | xapp | 3.2.3_1 | 3.2.2_1 | 3.2.3 | manual | newer than Void |
 | xdg-desktop-portal-cosmic | 1.10.0_2 |  | 1.10.0 | manual | not in Void |
 | xdg-desktop-portal-gnome | 51.0_2 | 48.0_1 | 51.0 | review | newer than Void |
