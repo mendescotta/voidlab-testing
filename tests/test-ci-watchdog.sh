@@ -19,7 +19,7 @@ case "$1 $2" in
 		*) shift ;;
 		esac
 	done
-	[ ! -f "$W/fail-run-list" ] || exit 1
+	[ ! -f "$W/fail-run-list" ] && [ ! -f "$W/fail-run-list-${wf%.yml}" ] || exit 1
 	if [ "$ev" = schedule ]; then
 		f=$W/last-${wf%.yml}
 		success=$(cat "$W/success-${wf%.yml}" 2>/dev/null || true)
@@ -129,11 +129,15 @@ assert_eq "healthy closes the open issue" "$(grep -c 'issue close 42' "$W/calls"
 
 # 6. API errors must fail the watchdog rather than looking like an unhealthy workflow.
 setup
-touch "$W/fail-run-list"
+touch "$W/fail-run-list-auto-update"
+echo 2026-09-30T04:30:00Z > "$W/last-overlay-report"
 out=$(run) && rc=0 || rc=$?
 assert_eq "run-list API error fails the watchdog" "$rc" "1"
 assert_grep "run-list API error is explicit" 'cannot query scheduled runs for auto-update' <(echo "$out")
-assert_eq "API errors do not create a misleading issue" "$(grep -c 'issue create' "$W/calls" || true)" "0"
+assert_grep "watchdog still checks overlay-report after auto-update API failure" 'run list --workflow overlay-report.yml' "$W/calls"
+assert_grep "other workflow problems are reported despite an API error" 'last successful scheduled run' "$W/body"
+assert_grep "API failure is reported distinctly" 'could not query scheduled runs' "$W/body"
+assert_eq "API errors create one issue containing available results" "$(grep -c 'issue create' "$W/calls" || true)" "1"
 setup
 echo 2026-10-09T04:30:00Z > "$W/last-auto-update"
 echo 2026-10-06T05:00:00Z > "$W/last-overlay-report"

@@ -45,7 +45,9 @@ subpackage Void does not ship has its `srcpkgs/<name>` symlink.
 `.github/workflows/overlay-report.yml` opens one weekly `Overlay report` issue with the templates
 official Void has caught up with (add the ones that must stay to `tools/keep-overlay.list`) and the
 newer upstream releases that are not auto-updated.
-`.github/workflows/watchdog.yml` opens a `ci-watchdog` issue when a scheduled run stops succeeding, and
+`.github/workflows/watchdog.yml` opens or updates a `ci-watchdog` issue for stale/missing successes,
+latest failures outside the success window, or API-check errors; it ignores in-progress runs and
+transient failures while a recent success remains, and
 `.github/workflows/check.yml` lints the templates and patches a pull request touches (`tools/ci-check.sh`).
 
 The steps are ordinary subcommands, so CI and a laptop behave the same:
