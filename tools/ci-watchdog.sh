@@ -61,11 +61,12 @@ checks_failed=0
 check auto-update 36 || checks_failed=1
 check overlay-report 216 || checks_failed=1
 
+problems+="$check_errors"
 if ! n=$(gh issue list --state open --label ci-watchdog --json number --jq '.[0].number // empty'); then
 	echo "ci-watchdog: cannot query the open watchdog issue" >&2
+	[ -z "$problems" ] || printf '%s' "$problems" >&2
 	exit 1
 fi
-problems+="$check_errors"
 if [ -n "$problems" ]; then
 	body=$(printf 'Scheduled workflow status:\n\n%s\nCheck the Actions tab (a disabled schedule, an expired token or a failing job can cause this). This issue closes itself when all workflows can be checked and are healthy.\n' "$problems")
 	if ! gh label create ci-watchdog --color D93F0B >/dev/null 2>&1; then

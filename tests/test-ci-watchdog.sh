@@ -139,10 +139,11 @@ assert_grep "other workflow problems are reported despite an API error" 'last su
 assert_grep "API failure is reported distinctly" 'could not query scheduled runs' "$W/body"
 assert_eq "API errors create one issue containing available results" "$(grep -c 'issue create' "$W/calls" || true)" "1"
 setup
-echo 2026-10-09T04:30:00Z > "$W/last-auto-update"
+echo 2026-10-07T04:30:00Z > "$W/last-auto-update"
 echo 2026-10-06T05:00:00Z > "$W/last-overlay-report"
 touch "$W/fail-issue-list"
 out=$(run) && rc=0 || rc=$?
 assert_eq "issue-list API error fails the watchdog" "$rc" "1"
 assert_grep "issue-list API error is explicit" 'cannot query the open watchdog issue' <(echo "$out")
+assert_grep "issue-list API error logs the collected health problem" 'last successful scheduled run' <(echo "$out")
 finish
