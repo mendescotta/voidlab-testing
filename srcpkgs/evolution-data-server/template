@@ -1,18 +1,19 @@
 # Template file for 'evolution-data-server'
 pkgname=evolution-data-server
 version=3.56.2
-revision=5
+revision=6
 build_style=cmake
 build_helper="gir qemu"
 metapackage=yes
 configure_args="-DSYSCONF_INSTALL_DIR=/etc
  -DWITH_PHONENUMBER=ON -DENABLE_WEATHER=ON
+ -DENABLE_OAUTH2_WEBKITGTK=OFF -DENABLE_OAUTH2_WEBKITGTK4=OFF
  $(vopt_if gir '-DENABLE_INTROSPECTION=ON -DENABLE_VALA_BINDINGS=ON')"
 hostmakedepends="flex glib-devel gperf gettext pkg-config libglib-devel perl
  $(vopt_if gir vala)"
 makedepends="boost-devel libcanberra-devel libical-devel
  gnome-online-accounts-devel
- libsecret-devel mit-krb5-devel libwebkit2gtk41-devel libwebkitgtk60-devel
+ libsecret-devel mit-krb5-devel
  libsoup3-devel libphonenumber-devel $(vopt_if gir vala-devel) gtk4-devel
  gtk+3-devel libgweather-devel nspr-devel nss-devel"
 depends="evolution-data-server-core>=${version}_${revision} evolution-data-server-gtk3>=${version}_${revision}"

@@ -1,18 +1,20 @@
 # Template file for 'gst-plugins-good1'
 pkgname=gst-plugins-good1
 version=1.28.8
-revision=1
+revision=2
 build_style=meson
 build_helper="qmake qmake6"
 configure_args="-Ddv=disabled -Ddv1394=disabled -Dshout2=disabled -Dqt5=enabled
+ -Dlibcaca=disabled -Daalib=disabled
  -Dqt6=enabled $(vopt_feature wayland qt-wayland) -Dqt-method=qmake
  $(vopt_feature gtk3 gtk3) -Dpkgconfig.relocatable=true"
 # XXX: libdv, dv1394 and shout2 modules.
+# No ASCII-art video sinks: libcaca pulls imlib2 -> libspectre -> ghostscript.
 hostmakedepends="pkg-config gettext glib-devel orc qt5-host-tools
  qt5-qmake qt6-base qt6-shadertools"
 makedepends="
  libpng-devel libxml2-devel libgudev-devel libflac-devel
- libXdamage-devel aalib-devel libcaca-devel
+ libXdamage-devel
  taglib-devel gst-plugins-base1-devel
  pulseaudio-devel orc-devel libXv-devel wavpack-devel
  v4l-utils-devel jack-devel speex-devel libvpx-devel lame-devel
