@@ -11,6 +11,7 @@ problems=""
 check_errors=""
 check() { # workflow file, max age in hours
 	local wf=$1 max=$2 latest first created conclusion last_success ts age
+	# gh's API page cap is 100; that spans well beyond both the daily and weekly freshness windows.
 	if ! latest=$(gh run list --workflow "$wf.yml" --event schedule --limit 100 --json createdAt,conclusion,status \
 		--jq '[.[] | select(.status == "completed")] as $runs | if ($runs | length) == 0 then "" else [($runs[0].createdAt // "-"), ($runs[0].conclusion // "-"), ([$runs[] | select(.conclusion == "success")][0].createdAt // "-")] | @tsv end'); then
 		echo "ci-watchdog: cannot query scheduled runs for $wf" >&2
