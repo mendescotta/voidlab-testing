@@ -84,11 +84,9 @@ post_install() {
 }
 
 gdm-session_package() {
+	metapackage=yes
 	depends="gnome-shell gnome-session"
 	short_desc+=" - session dependencies"
-	pkg_install() {
-		:
-	}
 }
 
 libgdm_package() {
