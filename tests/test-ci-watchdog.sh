@@ -27,9 +27,9 @@ case "$1 $2" in
 			read -r created < "$f"
 			conclusion=$(cat "$W/conclusion-${wf%.yml}" 2>/dev/null || echo success)
 			[ -n "$success" ] || [ "$conclusion" != success ] || success=$created
-			printf '%s\t%s\t%s\n' "$created" "$conclusion" "${success:--}"
+			printf '%s|%s|%s\n' "$created" "$conclusion" "$success"
 		elif [ -n "$success" ]; then
-			printf '%s\t%s\t%s\n' '-' '-' "$success"
+			printf '||%s\n' "$success"
 		fi
 	else
 		cat "$W/first-${wf%.yml}" 2>/dev/null || true

@@ -13,14 +13,14 @@ check() { # workflow file, max age in hours
 	local wf=$1 max=$2 latest first created conclusion last_success ts age
 	# gh's API page cap is 100; that spans well beyond both the daily and weekly freshness windows.
 	if ! latest=$(gh run list --workflow "$wf.yml" --event schedule --limit 100 --json createdAt,conclusion,status \
-		--jq '[.[] | select(.status == "completed")] as $runs | if ($runs | length) == 0 then "" else [($runs[0].createdAt // "-"), ($runs[0].conclusion // "-"), ([$runs[] | select(.conclusion == "success")][0].createdAt // "-")] | @tsv end'); then
+		--jq '[.[] | select(.status == "completed")] as $runs | if ($runs | length) == 0 then "" else [($runs[0].createdAt // ""), ($runs[0].conclusion // ""), ([$runs[] | select(.conclusion == "success")][0].createdAt // "")] | join("|") end'); then
 		echo "ci-watchdog: cannot query scheduled runs for $wf" >&2
 		check_errors+="- \`$wf\`: could not query scheduled runs"$'\n'
 		return 1
 	fi
 	if [ -n "$latest" ]; then
-		IFS=$'\t' read -r created conclusion last_success <<<"$latest"
-		if [ "$last_success" != - ]; then
+		IFS='|' read -r created conclusion last_success <<<"$latest"
+		if [ -n "$last_success" ]; then
 			if ! ts=$(date -u -d "$last_success" +%s); then
 				echo "ci-watchdog: invalid successful-run timestamp for $wf: $last_success" >&2
 				check_errors+="- \`$wf\`: invalid successful-run timestamp"$'\n'
@@ -29,9 +29,9 @@ check() { # workflow file, max age in hours
 			age=$(((now - ts) / 3600))
 			[ "$age" -gt "$max" ] || return 0
 		fi
-		if [ "$created" != - ] && [ "$conclusion" != success ]; then
+		if [ -n "$created" ] && [ "$conclusion" != success ]; then
 			problems+="- \`$wf\`: latest completed scheduled run concluded $conclusion ($created); no success within ${max}h"$'\n'
-		elif [ "$last_success" != - ]; then
+		elif [ -n "$last_success" ]; then
 			problems+="- \`$wf\`: last successful scheduled run $last_success (${age}h ago, limit ${max}h)"$'\n'
 		fi
 		return 0
