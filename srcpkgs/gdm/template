@@ -14,6 +14,7 @@ configure_args="
  -Dsystemduserunitdir=/usr/lib/systemd/user
  -Dlogind-provider=elogind -Dpam-services-dir=/etc/pam.d"
 hostmakedepends="dconf gettext itstool pkg-config"
+# sd_session_get_username() needs the overlay elogind (257); Void ships 252.
 makedepends="accountsservice-devel elogind-devel gettext-devel glib-devel
  iso-codes libSM-devel libcanberra-devel nss-devel pam-devel upower-devel
  plymouth-devel libgudev-devel polkit-devel"
