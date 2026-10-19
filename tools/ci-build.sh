@@ -4,6 +4,7 @@
 # produces data in $AUTO_UPDATE_OUT (default out/) for the publish job, which treats it as untrusted:
 #   passed.tsv     status<TAB>pkg<TAB>version_revision that was built (status bump|unpublished)
 #   failed.tsv     pkg<TAB>version
+#   upstream-commit  Void's void-packages commit used for the build
 #   templates/<pkg>/template   the bumped template of each passing bump
 #   xbps/*.xbps    packages built in this run
 #   logs/<pkg>.log tail of the log of each failure
@@ -60,6 +61,9 @@ seed_binpkgs() {
 repo_list() { (shopt -s nullglob; for f in repo/*.xbps; do echo "${f##*/}"; done | sort); }
 
 "$VL" sync </dev/null || exit 1
+UPSTREAM_COMMIT=$(git -C .upstream rev-parse HEAD) || exit 1
+[[ $UPSTREAM_COMMIT =~ ^[0-9a-f]{40}$ ]] || { echo "ci-build: invalid upstream commit: $UPSTREAM_COMMIT" >&2; exit 1; }
+printf '%s\n' "$UPSTREAM_COMMIT" > "$OUT/upstream-commit"
 "$VL" pull </dev/null || exit 1
 name_map_load
 seed_binpkgs || exit 1

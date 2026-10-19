@@ -53,12 +53,15 @@ HASH_RE='[0-9a-f]{64}'
 # --- layout: only the expected files, no links, no special files
 [ -z "$(find "$BUILD_OUT" -type l -print -quit)" ] || die "symlink in the build artifact"
 [ -z "$(find "$BUILD_OUT" ! -type f ! -type d -print -quit)" ] || die "special file in the build artifact"
-layout_re="^(passed\.tsv|failed\.tsv|templates/$NAME_RE/template|xbps/$NAME_RE\.xbps|logs/$NAME_RE\.log)\$"
+layout_re="^(passed\.tsv|failed\.tsv|upstream-commit|templates/$NAME_RE/template|xbps/$NAME_RE\.xbps|logs/$NAME_RE\.log)\$"
 while IFS= read -r f; do
 	rel=${f#"$BUILD_OUT"/}
 	[[ $rel =~ $layout_re ]] || die "unexpected file in the build artifact: $rel"
 done < <(find "$BUILD_OUT" -type f)
 [ -f "$BUILD_OUT/passed.tsv" ] && [ -f "$BUILD_OUT/failed.tsv" ] || die "passed.tsv or failed.tsv is missing"
+[ -f "$BUILD_OUT/upstream-commit" ] || die "upstream-commit is missing from the build artifact"
+UPSTREAM_COMMIT=$(cat "$BUILD_OUT/upstream-commit")
+[[ $UPSTREAM_COMMIT =~ ^[0-9a-f]{40}$ ]] || die "invalid upstream commit in the build artifact"
 
 # --- passed.tsv
 # tiers come from the trusted checkout, never from the artifact. auto: merge and publish; review: open the
@@ -129,11 +132,12 @@ shopt -u nullglob
 # replaces, sonames... are not accounted for by its template or its files rejects that template only.
 CHK=$(mktemp -d)
 trap 'rm -rf "$CHK" "$CHK".*' EXIT
-# who owns a soname: Void's common/shlibs, then ours (the build job has both in .upstream/)
+# who owns a soname: Void's common/shlibs at the exact revision used by the build, then ours
 UPSTREAM_SHLIBS=${VOIDLAB_UPSTREAM_SHLIBS:-}
 if [ -z "$UPSTREAM_SHLIBS" ]; then
 	UPSTREAM_SHLIBS=$CHK.shlibs
-	curl -fsSL --retry 3 -o "$UPSTREAM_SHLIBS" https://raw.githubusercontent.com/void-linux/void-packages/master/common/shlibs ||
+	curl -fsSL --retry 3 -o "$UPSTREAM_SHLIBS" \
+		"https://raw.githubusercontent.com/void-linux/void-packages/$UPSTREAM_COMMIT/common/shlibs" ||
 		die "cannot fetch Void's common/shlibs"
 fi
 [ -s "$UPSTREAM_SHLIBS" ] || die "Void's common/shlibs is empty"

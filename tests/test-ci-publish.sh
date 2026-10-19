@@ -26,6 +26,7 @@ fresh() {
 	git add -A; git commit -qm init; git remote add origin "$T/origin.git"; git push -q origin main
 	: > "$T/calls.log"; : > "$T/gh.log"; rm -f "$T/key.pem" "$T/body.md"
 	mkdir -p "$T/out/xbps" "$T/out/templates" "$T/out/logs"; : > "$T/out/passed.tsv"; : > "$T/out/failed.tsv"
+	printf '%s\n' "$(printf 'a%.0s' {1..40})" > "$T/out/upstream-commit"
 	cd "$HERE"
 }
 addpkg() { (cd "$T/out/xbps" && xbps-create -A noarch -n "$1" -s t "$T/empty" >/dev/null); }
@@ -85,6 +86,11 @@ out=$(cd "$T/work" && BUILD_OUT=$T/out env -u GITHUB_ACTIONS bash tools/ci-publi
 assert_grep "refuses to run outside GitHub Actions" 'refusing to run outside GitHub Actions' <(echo "$out")
 out=$(cd "$T/work" && CI_AUTO_UPDATE_FORCE=1 bash tools/ci-publish.sh 2>&1 || true)
 assert_grep "needs the build artifact"          'BUILD_OUT' <(echo "$out")
+
+fresh; good_a; rm "$T/out/upstream-commit"
+aborted "missing upstream commit" "upstream-commit is missing"
+fresh; good_a; echo invalid > "$T/out/upstream-commit"
+aborted "malformed upstream commit" "invalid upstream commit"
 
 # 1. happy path
 fresh; good_a

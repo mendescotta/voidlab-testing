@@ -24,6 +24,8 @@ The build job runs the same package checks (`pkg_meta_problems` in `tools/ci-lib
 xbps-src's own provides and shlib-provides hooks) right after each build, so a package the publish job
 would reject fails there with its reason in the log. It stops starting new packages after 280 minutes
 (`AUTO_UPDATE_BUDGET_MIN`), so what was built is always handed over and the rest waits for the next run.
+The build artifact records the exact `void-packages` commit used by `voidlab sync`; the publish job
+fetches `common/shlibs` at that commit rather than from moving `master`.
 The package workflows pin the Void container to one image digest; workflow changes that update it should
 use a tested digest and update all references together. The actionlint container is pinned the same way.
 Update digests in a reviewed change after checking the relevant workflow runs. The Void package
