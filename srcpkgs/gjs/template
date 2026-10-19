@@ -1,6 +1,6 @@
 # Template file for 'gjs'
 pkgname=gjs
-version=1.90.0
+version=1.90.1
 revision=1
 build_style=meson
 build_helper="gir qemu"
@@ -16,7 +16,7 @@ homepage="https://gitlab.gnome.org/GNOME/gjs"
 changelog="https://gitlab.gnome.org/GNOME/gjs/-/raw/master/NEWS"
 #changelog="https://gitlab.gnome.org/GNOME/gjs/-/raw/gnome-49/NEWS"
 distfiles="${GNOME_SITE}/gjs/${version%.*}/gjs-${version}.tar.xz"
-checksum=47e9f22b1d4aca841c6c492b449b6de32ff680972183e26fe7b98a45c5c3fee1
+checksum=05ceaa80f48e3782e5c44938572fad863e02b8c4a6c55657a99aa81db8ce9efa
 make_check_pre="xvfb-run"
 
 if [ "$XBPS_CHECK_PKGS" ]; then

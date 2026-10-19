@@ -23,6 +23,7 @@ cd "$(dirname "$(readlink -f "$0")")/.." || exit 1
 VL=${VOIDLAB_BIN:-./voidlab}
 OUT=${AUTO_UPDATE_OUT:-out}
 BUDGET_MIN=${AUTO_UPDATE_BUDGET_MIN:-280}
+OFFICIAL_URL=${VOIDLAB_OFFICIAL_URL:-https://repo-ci.voidlinux.org/current}
 LOGDIR=$(mktemp -d)
 log() { printf '=> %s\n' "$*"; }
 tab=$'\t'
@@ -112,7 +113,8 @@ while IFS=$'\t' read -r -u 3 status pkg ours other; do
 	before=$(repo_list)
 	# upstream build scripts are third-party code: they get no GitHub token and no signing key
 	if ! { env -u GH_TOKEN -u GITHUB_TOKEN -u VOIDLAB_PRIVKEY "$VL" build "$pkg" &&
-		env -u GH_TOKEN -u GITHUB_TOKEN -u VOIDLAB_PRIVKEY "$VL" test "$pkg"; } </dev/null >"$LOGDIR/$pkg.log" 2>&1; then
+		env -u GH_TOKEN -u GITHUB_TOKEN -u VOIDLAB_PRIVKEY \
+			VOIDLAB_OFFICIAL_URL="$OFFICIAL_URL" "$VL" test "$pkg"; } </dev/null >"$LOGDIR/$pkg.log" 2>&1; then
 		log "build or test failed: $pkg"
 		printf '%s\t%s\n' "$pkg" "${ver%_*}" >> "$OUT/failed.tsv"
 		tail -n 40 "$LOGDIR/$pkg.log" > "$OUT/logs/$pkg.log"

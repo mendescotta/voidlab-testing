@@ -35,6 +35,7 @@ build) echo "build \$2 sees: key=\${VOIDLAB_PRIVKEY:-none} token=\${GH_TOKEN:-no
 	if [ -f "$T/badmeta" ] && [ "\$2" = a ]; then rm -f "repo/a-\$ver.noarch.xbps"; (cd repo && xbps-create -q -A noarch -n "a-\$ver" -s t -P "glibc-9999_1" "$T/empty" >/dev/null && XBPS_ARCH=x86_64 xbps-rindex -a "a-\$ver.noarch.xbps" >/dev/null); fi
 	# a build that also had to build dependencies of other overlay templates
 	if [ -f "$T/deps" ] && [ "\$2" = a ]; then echo x > repo/dep-1.0_1.noarch.xbps; echo x > repo/nv-1.0_1.noarch.xbps; echo x > repo/zzz-1.0_1.noarch.xbps; fi ;;
+ test) printf '%s\n' "\${VOIDLAB_OFFICIAL_URL:-}" > "$T/test-url.log" ;;
 esac
 exit 0
 STUB
@@ -57,6 +58,7 @@ assert_eq   "hostdir/binpkgs is indexed" "$(XBPS_ARCH=x86_64 xbps-query -i -R --
 assert_no   "a release package no template makes is not seeded (it would make xbps-src rebuild Void's package)" "$W/hostdir/binpkgs/lib-1.0_1.noarch.xbps"
 assert_grep "a is built"                         '^build a$' "$T/calls.log"
 assert_grep "a is tested"                        '^test a$'  "$T/calls.log"
+assert_eq   "install tests use the CI mirror"      "$(cat "$T/test-url.log")" "https://repo-ci.voidlinux.org/current"
 assert_eq   "b is not tested after a failed build" "$(grep -c '^test b$' "$T/calls.log" || true)" "0"
 assert_grep "unpublished c is built and tested"  '^test c$'  "$T/calls.log"
 assert_eq   "failed detection d is never built"  "$(grep -c '^build d$' "$T/calls.log" || true)" "0"
