@@ -28,6 +28,13 @@ Templates live in `srcpkgs/`. To use a local build instead of the release, set
 `repository=/path/to/voidlab/repo`. Other subcommands: `status`, `tiers`,
 `update [--check]`, `test <pkg>`, `redundant`, `packages`, `keygen`, `publish`.
 
+The live release is published by CI, not from a maintainer checkout: push the
+template to `main` and the `auto-update` workflow builds and publishes every
+template the release lacks (run it by hand with
+`gh workflow run auto-update.yml`). A local `repo/` usually lags the release,
+so `./voidlab publish` from it would roll packages back or delete them.
+Experiments belong on a branch; anything on `main` gets published.
+
 ## Packages
 
 [PACKAGES.md](PACKAGES.md) lists every template with its version here, in
