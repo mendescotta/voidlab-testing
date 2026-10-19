@@ -1,0 +1,34 @@
+Why: turnstile opens an elogind session (service "turnstiled") for each
+user's service manager, so every user service and D-Bus activated app maps
+to that background session. polkit, GDM and GNOME expect systemd's
+semantics, where user@.service processes belong to no session and fall back
+to the user's display session; with the background session the polkit agent
+is never found for them. Chimera patches one caller (SetBrightness) for the
+same reason; this fixes the lookup for all of them.
+Upstream: none (turnstile-specific; see chimera-linux/cports main/elogind/patches/turnstile-dbus-session.patch)
+Drop when: turnstile stops registering the user manager as a session.
+
+--- a/src/libelogind/sd-login/sd-login.c
++++ b/src/libelogind/sd-login/sd-login.c
+@@ -46,7 +46,20 @@
+         assert_return(session, -EINVAL);
+ 
+         r = cg_pid_get_session(pid, session);
+-        return IN_SET(r, -ENXIO, -ENOMEDIUM) ? -ENODATA : r;
++        if (IN_SET(r, -ENXIO, -ENOMEDIUM))
++                return -ENODATA;
++        if (r < 0)
++                return r;
++
++        /* A user service manager started by turnstile gets a session of its
++         * own. Like systemd's user@.service, treat its processes as outside
++         * any session, so callers fall back to the user's display session. */
++        _cleanup_free_ char *service = NULL;
++        if (sd_session_get_service(*session, &service) >= 0 && streq(service, "turnstiled")) {
++                *session = mfree(*session);
++                return -ENODATA;
++        }
++        return r;
+ }
+ 
+ _public_ int sd_pid_get_unit(pid_t pid, char **unit) {
