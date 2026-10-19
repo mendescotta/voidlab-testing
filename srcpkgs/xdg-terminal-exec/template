@@ -1,0 +1,13 @@
+# Template file for 'xdg-terminal-exec'
+pkgname=xdg-terminal-exec
+version=0.14.3
+revision=1
+build_style=gnu-makefile
+make_install_args="prefix=/usr"
+hostmakedepends="scdoc"
+short_desc="Reference implementation of the XDG default terminal emulator spec"
+maintainer="mendescotta <mendescotta@gmail.com>"
+license="GPL-3.0-or-later"
+homepage="https://github.com/Vladimir-csp/xdg-terminal-exec"
+distfiles="https://github.com/Vladimir-csp/xdg-terminal-exec/archive/refs/tags/v${version}.tar.gz"
+checksum=82ac2dfdb357361d15f5163cdeb3cfd457bbb30bf5d2e14436393f493bd32afe

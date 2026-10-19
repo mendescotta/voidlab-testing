@@ -1,0 +1,28 @@
+# Template file for 'nautilus-slim'
+# Local test build only: this vendors a snapshot of the nautilus-slim fork
+# (a dependency-slimmed Nautilus fork with no tracker/tinysparql, no glycin,
+# no libportal/libgxdp, no gnome-desktop-4; see /home/gui/Projects/voidlab/
+# nautilus-slim/DIVERGENCE.md for the full inventory) instead of an upstream
+# tarball. distfiles below points nowhere real — the matching file is
+# pre-placed in $XBPS_SRCDISTDIR/nautilus-slim-${version}/ so the fetch hook
+# never dereferences the URL (see common/hooks/do-fetch/00-distfiles.sh:
+# it only fetches when the target file is missing). Not meant for CI/publish.
+pkgname=nautilus-slim
+version=51.1
+revision=1
+build_style=meson
+configure_args="-Dtests=none -Dselinux=disabled -Dcloudproviders=disabled
+ -Dintrospection=false"
+hostmakedepends="gettext glib-devel libxslt pkg-config desktop-file-utils
+ gtk4-update-icon-cache wayland-devel"
+makedepends="exempi-devel gnome-autoar-devel gtk4-devel libexif-devel
+ libgexiv2-0.16-devel libglib-devel libnotify-devel libxml2-devel
+ gst-plugins-base1-devel harfbuzz-devel libadwaita-devel
+ gsettings-desktop-schemas-devel"
+depends="desktop-file-utils gsettings-desktop-schemas hicolor-icon-theme gvfs"
+short_desc="Minimal-dependency fork of the GNOME file manager (local test build)"
+maintainer="mendescotta <mendescotta@gmail.com>"
+license="GPL-2.0-or-later, LGPL-2.1-or-later"
+homepage="https://wiki.gnome.org/Nautilus"
+distfiles="https://local.invalid/nautilus-slim-${version}.tar.gz"
+checksum=c0eddae187eb03f6a21cabcef7e5482e11fd57812166a96f952e31459c00ec07

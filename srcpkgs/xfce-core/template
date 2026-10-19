@@ -1,15 +1,17 @@
 # Template file for 'xfce-core'
 pkgname=xfce-core
 version=4.20
-revision=4
+revision=5
 metapackage=yes
 # The xfce4 meta minus its optional apps (parole, ristretto),
 # thumbnails (tumbler pulls ffmpegthumbnailer and ffmpeg) and xfwm4-themes.
+# Local test build: Thunar/thunar-volman replaced by nautilus-slim (see
+# srcpkgs/nautilus-slim/template). thunar-volman's removable-media automount
+# popup has no nautilus-slim equivalent here; not replaced.
 depends="
- Thunar>=${version}
+ nautilus-slim
  mousepad
  exo>=${version}
- thunar-volman>=${version}
  upower
  xdg-user-dirs-gtk
  xfce-polkit

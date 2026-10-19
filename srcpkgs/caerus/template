@@ -1,7 +1,7 @@
 # Template file for 'caerus'
 pkgname=caerus
 version=0.7.3
-revision=1
+revision=2
 build_style=cargo
 hostmakedepends="pkg-config clang"
 makedepends="gtk4-devel libxbps-devel glib-devel"
