@@ -11,6 +11,11 @@ flock -n 9 || { echo 'A GNOME session is already active for this user' >&2; exit
 export GNOME_SESSION_NAME="$session" GNOME_SESSION_LEADER_PID=$$
 service_dir="$XDG_RUNTIME_DIR/gnome-session/dinit"
 install -d -m700 "$service_dir"
+# The runtime directory can be removed and recreated while a previous leader
+# is still tearing down (so the lock above no longer excludes it). Cleanup
+# only touches the user manager while the definitions are still ours.
+printf '%s\n' "$$" > "$service_dir/leader"
+ours() { [[ "$(cat "$service_dir/leader" 2>/dev/null)" = "$$" ]]; }
 ctl() { dinitctl --user --quiet "$@"; }
 # PAM starts the manager before GDM executes the session. Do not fall back to
 # a second manager: that would leave session services outside turnstile.
@@ -29,8 +34,17 @@ clear_session_environment() {
     for key in "${session_keys[@]}"; do clear_env+=("$key="); done
     dbus-update-activation-environment "${clear_env[@]}" || true
 }
+shell=
 stop_session() {
     trap '' TERM INT HUP
+    [[ -n "$shell" ]] && kill "$shell" 2>/dev/null
+    if ours; then
+        stop_services
+    fi
+    [[ -n "$shell" ]] && wait "$shell" 2>/dev/null
+    return 0
+}
+stop_services() {
     ctl stop --force gnome-session.target || true
     if ctl unload gnome-session.target; then
         rm -f "$service_dir/gnome-session.target"
@@ -47,6 +61,7 @@ stop_session() {
     # keeps the user manager alive, so graphical services cannot outlive GNOME.
     ctl untrigger graphical.target || true
     ctl stop --force graphical.target || true
+    rm -f "$service_dir/leader"
     rmdir "$service_dir" 2>/dev/null || true
 }
 trap stop_session EXIT
@@ -69,6 +84,10 @@ fi
 printf 'type = internal\n' > "$service_dir/gnome-session.target"
 for component in "${components[@]}"; do
     [[ "$component" =~ ^[a-zA-Z0-9_-]+$ ]] || exit 2
+    # The shell stays a child of this login-session process rather than a
+    # user service: turnstile's manager has its own (background) logind
+    # session, and GDM and polkit look the shell's session up by its PID.
+    [[ "$component" = gnome-shell ]] && { want_shell=1; continue; }
     [[ -f "/etc/gnome-session/runit-sessions/$session.disabled" ]] && grep -qxF "$component" "/etc/gnome-session/runit-sessions/$session.disabled" && continue
     # These plugins only idle without their system daemon; installing the
     # daemon brings the plugin back at the next login.
@@ -91,23 +110,28 @@ restart = on-failure
 log-type = buffer
 EOF
     case "$component" in
-        gnome-shell|gnome-session-service|gnome-session-initialized) relation=depends-on ;;
+        gnome-session-service|gnome-session-initialized) relation=depends-on ;;
         *) relation=waits-for ;;
     esac
     printf '%s: %s\n' "$relation" "$component" >> "$service_dir/gnome-session.target"
 done
+ctl start --no-wait gnome-session.target
+if [[ -n "${want_shell:-}" ]]; then
+    /usr/libexec/gnome-session/dinit-component gnome-shell 9>&- & shell=$!
+fi
 ctl start gnome-session.target
-# Block on dinit's service events instead of polling. The monitor starts
-# before the state is re-checked; the timeout bounds the wait if a transition
-# lands before it has attached, or if its connection drops.
+# Block on the shell and dinit's service events instead of polling. The
+# monitor starts before the state is re-checked; the timeout bounds the wait
+# if a transition lands before it has attached, or if its connection drops.
 while :; do
     timeout 300 dinit-monitor --user --exit --command true \
-        gnome-session-service gnome-shell 9>&- & monitor=$!
+        gnome-session-service 9>&- & monitor=$!
     if ! ctl is-started gnome-session-service >/dev/null 2>&1; then
         kill "$monitor" 2>/dev/null; break
     fi
-    if ctl is-failed gnome-shell >/dev/null 2>&1; then
+    if [[ -n "$shell" ]] && ! kill -0 "$shell" 2>/dev/null; then
         kill "$monitor" 2>/dev/null; exit 1
     fi
-    wait "$monitor" || true
+    wait -n "$monitor" ${shell:+"$shell"} || true
+    kill "$monitor" 2>/dev/null
 done

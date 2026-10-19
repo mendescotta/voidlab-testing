@@ -5,15 +5,17 @@
 # the only phase that accepts mutter's Setenv(WAYLAND_DISPLAY): signalling
 # earlier leaves D-Bus activated applications without a display. Without
 # systemd the shell reports readiness by registering as a client
-# (gnome-shell revert-remove-gsm.patch), so wait for that ClientAdded.
+# (gnome-shell revert-remove-gsm.patch), after its synchronous Setenv.
+# Match that call itself: ClientAdded does not say who registered, and
+# at-spi-bus-launcher and settings daemons register before the shell.
 # dinit runs this as a scripted service; under runsv, run it only once.
 exec 2>&1
 [ -p supervise/control ] && sv once .
 fifo="$XDG_RUNTIME_DIR/gnome-session-initialized.fifo"
 rm -f "$fifo" && mkfifo -m600 "$fifo" || exit 1
-gdbus monitor --session --dest org.gnome.SessionManager \
-	--object-path /org/gnome/SessionManager > "$fifo" & monitor=$!
-grep -q -m1 'SessionManager.ClientAdded' < "$fifo"
+dbus-monitor --session "type='method_call',interface='org.gnome.SessionManager',member='RegisterClient',arg0='org.gnome.Shell.desktop'" \
+	> "$fifo" & monitor=$!
+grep -q -m1 'member=RegisterClient' < "$fifo"
 kill "$monitor" 2>/dev/null
 rm -f "$fifo"
 exec gdbus call --session --dest org.gnome.SessionManager \
