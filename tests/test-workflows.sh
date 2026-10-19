@@ -32,6 +32,9 @@ for f in "${files[@]}"; do
 		if bash -n "$ROOT/$s" 2>/dev/null; then ok "$n: $s parses"; else fail "$n: $s does not parse"; fi
 	done
 done
+for f in auto-update.yml check.yml overlay-report.yml; do
+	assert_grep "$f pre-checkout setup retains retries" 'retry xbps-install -y git' "$W/$f"
+done
 
 images=$(grep -hE '^[[:space:]]+image:' "${files[@]}")
 assert_eq "container images are pinned by digest" \

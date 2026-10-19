@@ -9,30 +9,31 @@ now=$(date -u -d "${WATCHDOG_NOW:-now}" +%s)
 
 problems=""
 check() { # workflow file, max age in hours
-	local wf=$1 max=$2 latest first created conclusion status ts age
-	if ! latest=$(gh run list --workflow "$wf.yml" --event schedule --limit 1 --json createdAt,conclusion,status \
-		--jq 'if length == 0 then "" else .[0] | [.createdAt // "", .conclusion // "", .status // ""] | @tsv end'); then
+	local wf=$1 max=$2 latest first created conclusion last_success ts age
+	if ! latest=$(gh run list --workflow "$wf.yml" --event schedule --limit 100 --json createdAt,conclusion,status \
+		--jq '[.[] | select(.status == "completed")] as $runs | if ($runs | length) == 0 then "" else [($runs[0].createdAt // "-"), ($runs[0].conclusion // "-"), ([$runs[] | select(.conclusion == "success")][0].createdAt // "-")] | @tsv end'); then
 		echo "ci-watchdog: cannot query scheduled runs for $wf" >&2
 		return 1
 	fi
 	if [ -n "$latest" ]; then
-		IFS=$'\t' read -r created conclusion status <<<"$latest"
-		if ! ts=$(date -u -d "$created" +%s); then
-			echo "ci-watchdog: invalid run timestamp for $wf: $created" >&2
-			return 1
+		IFS=$'\t' read -r created conclusion last_success <<<"$latest"
+		if [ "$last_success" != - ]; then
+			if ! ts=$(date -u -d "$last_success" +%s); then
+				echo "ci-watchdog: invalid successful-run timestamp for $wf: $last_success" >&2
+				return 1
+			fi
+			age=$(((now - ts) / 3600))
+			[ "$age" -gt "$max" ] || return 0
 		fi
-		age=$(((now - ts) / 3600))
-		if [ "$status" != completed ]; then
-			problems+="- \`$wf\`: latest scheduled run is $status ($created)"$'\n'
-		elif [ "$conclusion" != success ]; then
-			problems+="- \`$wf\`: latest scheduled run concluded $conclusion ($created)"$'\n'
-		elif [ "$age" -gt "$max" ]; then
-			problems+="- \`$wf\`: last successful scheduled run $created (${age}h ago, limit ${max}h)"$'\n'
+		if [ "$created" != - ] && [ "$conclusion" != success ]; then
+			problems+="- \`$wf\`: latest completed scheduled run concluded $conclusion ($created); no success within ${max}h"$'\n'
+		elif [ "$last_success" != - ]; then
+			problems+="- \`$wf\`: last successful scheduled run $last_success (${age}h ago, limit ${max}h)"$'\n'
 		fi
 		return 0
 	fi
 
-	# A workflow younger than its limit may simply not have reached its first scheduled run yet.
+	# In-progress runs are ignored; a workflow younger than its limit may not have completed a scheduled run yet.
 	if ! first=$(gh run list --workflow "$wf.yml" --limit 500 --json createdAt --jq '.[-1].createdAt // empty'); then
 		echo "ci-watchdog: cannot query run history for $wf" >&2
 		return 1

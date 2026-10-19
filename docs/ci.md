@@ -31,10 +31,14 @@ use a tested digest and update all references together. The actionlint container
 Update digests in a reviewed change after checking the relevant workflow runs. The Void package
 repositories are rolling, however, and CI deliberately updates the container's packages at runtime;
 the image pin makes the base environment reproducible, not the complete package-build environment.
+Repository setup and Git installation remain inline before checkout because checkout itself needs Git;
+the post-checkout setup action installs the remaining tools without repeating the system update.
 The auto-update build still needs a privileged container and `/dev` for xbps-src's chroot. It runs on a
 disposable GitHub-hosted runner, has no secrets and only a read-only token; the build script strips that
 token before running package build scripts. This is a residual trust boundary, not equivalent to a
-separate VM per package. Overlay-report needs no chroot and runs without the privileged container.
+separate VM per package. The watchdog ignores in-progress runs and does not flag a transient failure
+while a successful scheduled run is still inside its freshness window. Overlay-report needs no chroot
+and runs without the privileged container.
 The pull-request gate checks, before anything is built, that every package a changed template depends on
 exists in the overlay or Void's repositories at a version its `>=` floor allows, and that a new
 subpackage Void does not ship has its `srcpkgs/<name>` symlink.

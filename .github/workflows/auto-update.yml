@@ -44,7 +44,10 @@ jobs:
         run: |
           mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
           sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
-          xbps-install -Syu xbps && xbps-install -yu && xbps-install -y git
+          retry() { n=0; until "$@"; do n=$((n + 1)); [ "$n" -lt 3 ] || return 1; echo "retrying ($n/3): $*" >&2; sleep 5; done; }
+          retry xbps-install -Syu xbps
+          retry xbps-install -yu
+          retry xbps-install -y git
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -89,7 +92,10 @@ jobs:
         run: |
           mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
           sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
-          xbps-install -Syu xbps && xbps-install -yu && xbps-install -y git
+          retry() { n=0; until "$@"; do n=$((n + 1)); [ "$n" -lt 3 ] || return 1; echo "retrying ($n/3): $*" >&2; sleep 5; done; }
+          retry xbps-install -Syu xbps
+          retry xbps-install -yu
+          retry xbps-install -y git
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 

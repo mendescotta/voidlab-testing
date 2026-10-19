@@ -22,11 +22,14 @@ case "$1 $2" in
 	[ ! -f "$W/fail-run-list" ] || exit 1
 	if [ "$ev" = schedule ]; then
 		f=$W/last-${wf%.yml}
-		if [ -f "$f" ]; then
+		success=$(cat "$W/success-${wf%.yml}" 2>/dev/null || true)
+		if [ -f "$f" ] && [ "$(cat "$W/status-${wf%.yml}" 2>/dev/null || echo completed)" = completed ]; then
 			read -r created < "$f"
 			conclusion=$(cat "$W/conclusion-${wf%.yml}" 2>/dev/null || echo success)
-			status=$(cat "$W/status-${wf%.yml}" 2>/dev/null || echo completed)
-			printf '%s\t%s\t%s\n' "$created" "$conclusion" "$status"
+			[ -n "$success" ] || [ "$conclusion" != success ] || success=$created
+			printf '%s\t%s\t%s\n' "$created" "$conclusion" "${success:--}"
+		elif [ -n "$success" ]; then
+			printf '%s\t%s\t%s\n' '-' '-' "$success"
 		fi
 	else
 		cat "$W/first-${wf%.yml}" 2>/dev/null || true
@@ -43,7 +46,7 @@ chmod +x "$W/gh"
 export W
 export PATH=$W:$PATH WATCHDOG_NOW=2026-10-09T12:00:00Z GH_REPO=o/r
 
-setup() { rm -f "$W"/last-* "$W"/first-* "$W"/conclusion-* "$W"/status-* "$W"/open-issue "$W"/body "$W"/fail-* "$W"/calls; : > "$W/calls"; }
+setup() { rm -f "$W"/last-* "$W"/first-* "$W"/success-* "$W"/conclusion-* "$W"/status-* "$W"/open-issue "$W"/body "$W"/fail-* "$W"/calls; : > "$W/calls"; }
 run() { bash "$WD" 2>&1; }
 
 # 1. both fresh, no open issue -> nothing created
@@ -54,21 +57,30 @@ out=$(run) && rc=0 || rc=$?
 assert_eq "healthy exits 0" "$rc" "0"
 assert_eq "healthy creates no issue" "$(grep -c 'issue create' "$W/calls" || true)" "0"
 
-# 1b. A failed or running latest scheduled run is reported distinctly.
+# 1b. A failure is reported only when no recent successful run exists; in-progress runs do not page.
 setup
 echo 2026-10-09T04:30:00Z > "$W/last-auto-update"
 echo failure > "$W/conclusion-auto-update"
 echo 2026-10-06T05:00:00Z > "$W/last-overlay-report"
 out=$(run) && rc=0 || rc=$?
 assert_eq "failed scheduled run still exits successfully after reporting" "$rc" "0"
-assert_grep "failed scheduled run is identified in the issue" 'latest scheduled run concluded failure' "$W/body"
+assert_grep "failed scheduled run is identified in the issue" 'latest completed scheduled run concluded failure' "$W/body"
 setup
 echo 2026-10-09T11:30:00Z > "$W/last-auto-update"
 echo queued > "$W/status-auto-update"
+echo 2026-10-09T04:30:00Z > "$W/success-auto-update"
 echo 2026-10-06T05:00:00Z > "$W/last-overlay-report"
 out=$(run) && rc=0 || rc=$?
-assert_eq "in-progress scheduled run still exits successfully after reporting" "$rc" "0"
-assert_grep "in-progress run is identified in the issue" 'latest scheduled run is queued' "$W/body"
+assert_eq "in-progress run does not page when a recent success exists" "$rc" "0"
+assert_eq "in-progress run does not create an issue" "$(grep -c 'issue create' "$W/calls" || true)" "0"
+setup
+echo 2026-10-09T11:30:00Z > "$W/last-auto-update"
+echo failure > "$W/conclusion-auto-update"
+echo 2026-10-09T04:30:00Z > "$W/success-auto-update"
+echo 2026-10-06T05:00:00Z > "$W/last-overlay-report"
+out=$(run) && rc=0 || rc=$?
+assert_eq "transient failure is not reported while recent success is in window" "$rc" "0"
+assert_eq "transient failure does not create an issue" "$(grep -c 'issue create' "$W/calls" || true)" "0"
 
 # 2. auto-update stale (>36h) -> issue created, names the workflow
 setup
