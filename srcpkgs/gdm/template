@@ -1,7 +1,7 @@
 # Template file for 'gdm'
 pkgname=gdm
 version=51.1
-revision=1
+revision=2
 build_helper="gir"
 build_style=meson
 configure_args="
@@ -17,7 +17,9 @@ hostmakedepends="dconf gettext itstool pkg-config"
 makedepends="accountsservice-devel elogind-devel gettext-devel glib-devel
  iso-codes libSM-devel libcanberra-devel nss-devel pam-devel upower-devel
  plymouth-devel libgudev-devel polkit-devel"
-depends="gnome-settings-daemon gnome-shell gnome-session gsettings-desktop-schemas
+# gnome-shell depends on libgdm, so gnome-shell and gnome-session are
+# pulled in through the gdm-session subpackage to avoid a build-time cycle.
+depends="gdm-session>=${version}_${revision} gnome-settings-daemon gsettings-desktop-schemas
  $(vopt_if x11 'xorg-server xorg-server-xwayland xrdb')"
 checkdepends="check-devel"
 short_desc="GNOME Display Manager"
@@ -78,6 +80,14 @@ post_install() {
 
 	# runit service
 	vsv gdm
+}
+
+gdm-session_package() {
+	depends="gnome-shell gnome-session"
+	short_desc+=" - session dependencies"
+	pkg_install() {
+		:
+	}
 }
 
 libgdm_package() {
