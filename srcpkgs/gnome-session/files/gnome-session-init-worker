@@ -1,0 +1,155 @@
+#!/bin/bash
+# gnome-session's init worker for systems without systemd. gnome-session
+# (leader-main.c) sets up and exports the session environment, then execs
+# this with the session name; upstream's worker instead starts systemd user
+# units. This runs the same components, in the units' order, as children of
+# the login session: GDM and polkit find a process's session by its PID, and
+# user services (turnstile's, here) belong to a different session.
+set -euo pipefail
+session=${1:?session name required}
+case "$session" in *[!a-zA-Z0-9_-]*) exit 2 ;; esac
+: "${XDG_RUNTIME_DIR:?runtime directory is missing}"
+# One activation environment per user: refuse a second concurrent session.
+exec 9>"$XDG_RUNTIME_DIR/gnome-session.lock"
+flock -n 9 || { echo 'A GNOME session is already active for this user' >&2; exit 1; }
+conf=/usr/libexec/gnome-session/sessions
+local_conf=/etc/gnome-session/sessions
+
+declare -A pid_of=() name_of=() restarts=()
+spawn() {
+    local component=$1
+    case "$component" in
+        gnome-session-service)
+            /usr/libexec/gnome-session-service --session="$session" 9>&- & ;;
+        gnome-shell)
+            case "$session" in
+                gnome-login) mode=gdm ;;
+                gnome-initial-setup) mode=initial-setup ;;
+                *) mode=user ;;
+            esac
+            /usr/bin/gnome-shell --mode="$mode" --wayland-display="$wayland_display" 9>&- & ;;
+        gsd-*)
+            WAYLAND_DISPLAY=$wayland_display "/usr/libexec/$component" 9>&- & ;;
+        *) echo "Unknown session component: $component" >&2; return 1 ;;
+    esac
+    pid_of[$component]=$!
+    name_of[$!]=$component
+}
+stop() {
+    trap '' TERM INT HUP
+    local pid
+    for pid in "${!name_of[@]}"; do kill "$pid" 2>/dev/null || true; done
+    wait || true
+    # As org.gnome.Shell@wayland.service's ExecStopPost, unless the runtime
+    # directory (and so the bus) already belongs to a newer login.
+    if [[ /proc/self/fd/9 -ef "$XDG_RUNTIME_DIR/gnome-session.lock" ]]; then
+        dbus-update-activation-environment WAYLAND_DISPLAY= DISPLAY= \
+            XAUTHORITY= GNOME_SETUP_DISPLAY= 2>/dev/null || true
+        if [[ -n "$graphical" ]]; then
+            user_manager unsetenv WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+            user_manager untrigger graphical.target
+            user_manager stop --force graphical.target
+        fi
+    fi
+}
+# Turnstile's user Dinit, if it runs: its graphical.target stands in for
+# systemd's graphical-session.target.
+user_manager() {
+    [[ -S "$XDG_RUNTIME_DIR/dinitctl" ]] || return 0
+    dinitctl --user --quiet "$@" 9>&- 2>/dev/null || true
+}
+graphical=
+trap stop EXIT
+trap 'exit 0' TERM INT HUP
+
+# Components: the session's list if it has one, else the full desktop.
+if [[ -f "$conf/$session" ]]; then
+    mapfile -t components < <(sed '/^#/d;/^$/d' "$conf/$session")
+else
+    components=(gnome-session-service gnome-shell)
+    for plugin in a11y-settings color datetime housekeeping keyboard media-keys \
+        power print-notifications rfkill screensaver-proxy smartcard sound \
+        usb-protection wwan; do
+        components+=("gsd-$plugin")
+    done
+fi
+plugins=()
+for component in "${components[@]}"; do
+    [[ "$component" = gsd-* ]] || continue
+    [[ -f "$local_conf/$session.disabled" ]] &&
+        grep -qxF "$component" "$local_conf/$session.disabled" && continue
+    # These plugins only idle without their system daemon; installing the
+    # daemon brings the plugin back at the next login.
+    case "$component" in
+        gsd-print-notifications) backend=cupsd ;;
+        gsd-smartcard) backend=pcscd ;;
+        gsd-usb-protection) backend=usbguard-daemon ;;
+        gsd-wwan) backend=ModemManager ;;
+        # Started by the shell through systemd once Xwayland runs
+        # (gnome-session-x11-services-ready.target); not supported here yet.
+        gsd-xsettings) continue ;;
+        *) backend= ;;
+    esac
+    [[ -z "$backend" || -x "/usr/bin/$backend" ]] || continue
+    plugins+=("$component")
+done
+
+# The compositor's socket name, chosen here so the plugins can be given it.
+n=0
+while [[ -e "$XDG_RUNTIME_DIR/wayland-$n" || -e "$XDG_RUNTIME_DIR/wayland-$n.lock" ]]; do
+    n=$((n + 1))
+done
+wayland_display=wayland-$n
+
+spawn gnome-session-service
+gdbus wait --session --timeout 30 org.gnome.SessionManager
+# gnome-session stays in its initialization phase, the only one that accepts
+# mutter's Setenv(WAYLAND_DISPLAY), until Initialized; upstream's
+# gnome-session-signal-init.service calls it once the shell is ready
+# (Type=notify). Without systemd the shell reports readiness by registering
+# as a client (gnome-shell revert-remove-gsm.patch), after that Setenv. Match
+# the call itself: ClientAdded does not say who registered, and
+# at-spi-bus-launcher and the settings daemons register before the shell.
+ready="$XDG_RUNTIME_DIR/gnome-session-ready.fifo"
+rm -f "$ready" && mkfifo -m600 "$ready"
+dbus-monitor --session "type='method_call',interface='org.gnome.SessionManager',member='RegisterClient',arg0='org.gnome.Shell.desktop'" \
+    > "$ready" 9>&- & monitor=$!
+exec 8<"$ready"
+rm -f "$ready"
+spawn gnome-shell
+if grep -q -m1 'member=RegisterClient' <&8; then
+    gdbus call --session --dest org.gnome.SessionManager \
+        --object-path /org/gnome/SessionManager \
+        --method org.gnome.SessionManager.Initialized >/dev/null
+fi
+kill "$monitor" 2>/dev/null || true
+exec 8<&-
+wait "$monitor" 2>/dev/null || true
+
+# The display is up: user services may use it. Turnstile triggers its
+# graphical.target once WAYLAND_DISPLAY is set; a previous logout stopped it.
+graphical=1
+user_manager start --no-wait graphical.target
+user_manager setenv WAYLAND_DISPLAY="$wayland_display" \
+    XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-GNOME}"
+
+# gnome-session-initialized.target reached: the settings daemons follow.
+for plugin in "${plugins[@]}"; do spawn "$plugin"; done
+
+# The session ends with its manager or its shell, as upstream; a settings
+# daemon restarts on failure (Restart=on-failure, at most five times).
+while :; do
+    status=0
+    wait -n -p done "${!name_of[@]}" || status=$?
+    component=${name_of[$done]}
+    unset "name_of[$done]"
+    case "$component" in
+        gnome-session-service) exit 0 ;;
+        gnome-shell) exit 1 ;;
+    esac
+    count=${restarts[$component]:-0}
+    if [[ "$status" -ne 0 && "$count" -lt 5 ]]; then
+        restarts[$component]=$((count + 1))
+        spawn "$component"
+    fi
+done

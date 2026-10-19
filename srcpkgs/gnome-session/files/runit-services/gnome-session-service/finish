@@ -1,9 +1,0 @@
-#!/bin/sh
-# runsv runs this with $1 = exit code (-1 if killed by a signal) and
-# $2 = signal/wait status. Under systemd gnome-session-service stopping
-# (OnFailure=gnome-session-shutdown.target) takes the session down with it.
-# Do the same here for every exit: a restarted instance is never signalled
-# Initialized again and refuses Logout and Shutdown.
-sv down . 2>/dev/null
-[ -n "$GNOME_SESSION_LEADER_PID" ] && kill -TERM "$GNOME_SESSION_LEADER_PID"
-exit 0
