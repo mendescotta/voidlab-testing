@@ -18,7 +18,8 @@ makedepends="gnome-control-center-devel at-spi2-atk-devel
 depends="elogind gnome-control-center gsettings-desktop-schemas gnome-menus libgdm
  upower gstreamer1-pipewire gst-plugins-good1 ibus-gtk4
  glycin libnma-gtk4"  # JS typelibs are invisible to shlib dependency detection
-checkdepends="xvfb-run mesa-dri $depends"
+# libgdm is built from gdm, which depends on gnome-shell: a cycle if required to build
+checkdepends="xvfb-run mesa-dri ${depends/libgdm/}"
 short_desc="GNOME core user interface"
 maintainer="Orphaned <orphan@voidlinux.org>"
 license="GPL-2.0-or-later"
