@@ -1,0 +1,99 @@
+Why: gnome-session 49 dropped AutostartCondition; under systemd the
+xdg-autostart generator evaluates it instead. Without systemd nothing did,
+so e.g. Orca's autostart entry (screen-reader-enabled) launched at every
+login. Evaluate GSettings, if-exists/unless-exists and GNOME3
+if-session/unless-session once at login, as gnome-session 48 did.
+Upstream: none (systemd-only upstream)
+Drop when: upstream supports a non-systemd session, or autostart moves elsewhere.
+
+--- a/gnome-session/gsm-app.c
++++ b/gnome-session/gsm-app.c
+@@ -34,6 +34,7 @@
+ #define GSM_APP_SYSTEMD_HIDDEN_KEY "X-GNOME-HiddenUnderSystemd"
+ #define GSM_APP_ENABLED_KEY        "X-GNOME-Autostart-enabled"
+ #define GSM_APP_PHASE_KEY          "X-GNOME-Autostart-Phase"
++#define GSM_APP_CONDITION_KEY      "AutostartCondition"
+ 
+ /* This comment is a record of keys that were previously used but are not used
+  * anymore. We keep this so that we don't accidentally redefine these keys in
+@@ -41,7 +42,6 @@
+  *
+  * X-GNOME-AutoRestart
+  * X-GNOME-Autostart-discard-exec
+- * AutostartCondition
+  * X-GNOME-DBus-Name
+  * X-GNOME-DBus-Path
+  * X-GNOME-DBus-Start-Arguments
+@@ -142,9 +142,58 @@
+         return g_app_info_get_id (G_APP_INFO (app->inner));
+ }
+ 
++/* Without systemd nothing else evaluates AutostartCondition (under systemd,
++ * the xdg-autostart generator does). Checked once, at login, like there. */
++static gboolean
++condition_is_met (const char *condition)
++{
++        g_auto (GStrv) words = g_strsplit_set (condition, " \t", 0);
++        g_autoptr (GPtrArray) args = g_ptr_array_new ();
++
++        for (char **w = words; *w != NULL; w++)
++                if (**w != '\0')
++                        g_ptr_array_add (args, *w);
++
++        if (args->len == 3 && g_str_equal (args->pdata[0], "GSettings")) {
++                GSettingsSchemaSource *source = g_settings_schema_source_get_default ();
++                g_autoptr (GSettingsSchema) schema = NULL;
++                g_autoptr (GSettings) settings = NULL;
++
++                if (source != NULL)
++                        schema = g_settings_schema_source_lookup (source, args->pdata[1], TRUE);
++                if (schema == NULL || !g_settings_schema_has_key (schema, args->pdata[2]))
++                        return FALSE;
++                settings = g_settings_new_full (schema, NULL, NULL);
++                return g_settings_get_boolean (settings, args->pdata[2]);
++        }
++
++        if (args->len == 2 &&
++            (g_str_equal (args->pdata[0], "if-exists") ||
++             g_str_equal (args->pdata[0], "unless-exists"))) {
++                g_autofree char *path = g_build_filename (g_get_user_config_dir (),
++                                                          args->pdata[1], NULL);
++                gboolean exists = g_file_test (path, G_FILE_TEST_EXISTS);
++
++                return g_str_equal (args->pdata[0], "if-exists") ? exists : !exists;
++        }
++
++        if (args->len == 3 && g_str_equal (args->pdata[0], "GNOME3") &&
++            (g_str_equal (args->pdata[1], "if-session") ||
++             g_str_equal (args->pdata[1], "unless-session"))) {
++                gboolean same = g_strcmp0 (g_getenv ("DESKTOP_SESSION"), args->pdata[2]) == 0;
++
++                return g_str_equal (args->pdata[1], "if-session") ? same : !same;
++        }
++
++        /* Unknown conditions do not prevent a start, as before. */
++        return TRUE;
++}
++
+ gboolean
+ gsm_app_peek_is_disabled (GsmApp *app)
+ {
++        g_autofree char *condition = NULL;
++
+         g_return_val_if_fail (GSM_IS_APP (app), FALSE);
+ 
+         /* GSM_AUTOSTART_APP_ENABLED_KEY key, used by old gnome-session */
+@@ -181,6 +230,13 @@
+                 return TRUE;
+         }
+ 
++        condition = g_desktop_app_info_get_string (app->inner, GSM_APP_CONDITION_KEY);
++        if (condition != NULL && !condition_is_met (condition)) {
++                g_debug ("App %s is disabled by " GSM_APP_CONDITION_KEY " %s",
++                         gsm_app_peek_app_id (app), condition);
++                return TRUE;
++        }
++
+         return FALSE;
+ }
+ 
