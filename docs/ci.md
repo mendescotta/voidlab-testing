@@ -24,6 +24,15 @@ The build job runs the same package checks (`pkg_meta_problems` in `tools/ci-lib
 xbps-src's own provides and shlib-provides hooks) right after each build, so a package the publish job
 would reject fails there with its reason in the log. It stops starting new packages after 280 minutes
 (`AUTO_UPDATE_BUDGET_MIN`), so what was built is always handed over and the rest waits for the next run.
+The package workflows pin the Void container to one image digest; workflow changes that update it should
+use a tested digest and update all references together. The actionlint container is pinned the same way.
+Update digests in a reviewed change after checking the relevant workflow runs. The Void package
+repositories are rolling, however, and CI deliberately updates the container's packages at runtime;
+the image pin makes the base environment reproducible, not the complete package-build environment.
+The auto-update build still needs a privileged container and `/dev` for xbps-src's chroot. It runs on a
+disposable GitHub-hosted runner, has no secrets and only a read-only token; the build script strips that
+token before running package build scripts. This is a residual trust boundary, not equivalent to a
+separate VM per package. Overlay-report needs no chroot and runs without the privileged container.
 The pull-request gate checks, before anything is built, that every package a changed template depends on
 exists in the overlay or Void's repositories at a version its `>=` floor allows, and that a new
 subpackage Void does not ship has its `srcpkgs/<name>` symlink.

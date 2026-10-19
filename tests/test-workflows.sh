@@ -33,6 +33,13 @@ for f in "${files[@]}"; do
 	done
 done
 
+images=$(grep -hE '^[[:space:]]+image:' "${files[@]}")
+assert_eq "container images are pinned by digest" \
+	"$(grep -vcE 'image: [^[:space:]@]+@sha256:[0-9a-f]{64}$' <<<"$images" || true)" "0"
+assert_eq "package workflows use one tested container image" \
+	"$(grep -oE 'image: [^[:space:]]+' <<<"$images" | sort -u | wc -l)" "1"
+assert_grep "actionlint image is pinned by digest" 'docker run .*rhysd/actionlint@sha256:[0-9a-f]{64}' "$W/validate.yml"
+
 U=$W/auto-update.yml
 build=$(awk '/^  build:/ { on = 1; next } /^  publish:/ { on = 0 } on' "$U")
 publish=$(awk '/^  publish:/ { on = 1; next } on' "$U")
@@ -46,6 +53,8 @@ assert_grep "build job is read-only"               'contents: read' <(echo "$bui
 assert_eq "build job has no write permission"      "$(grep -cE '(contents|pull-requests|issues|packages|id-token): write' <<<"$build" || true)" "0"
 assert_grep "build checkout keeps no git credentials" 'persist-credentials: false' <(echo "$build")
 assert_grep "build job runs the build script"      'tools/ci-build.sh' <(echo "$build")
+assert_grep "the xbps-src build runs in a privileged container" '--privileged' <(echo "$build")
+assert_grep "the xbps-src build mounts /dev"       '/dev:/dev' <(echo "$build")
 assert_eq "build job never runs the publish script" "$(grep -c 'ci-publish' <<<"$build" || true)" "0"
 assert_grep "builds never run as root"             'sudo -Eu builder' <(echo "$build")
 assert_grep "build job hands data over as an artifact" 'upload-artifact' <(echo "$build")
@@ -57,6 +66,9 @@ done
 assert_grep "publish job checks out the trusted repo itself" 'actions/checkout' <(echo "$publish")
 assert_grep "the artifact lands outside the workspace" 'path: \${{ runner.temp }}' <(echo "$publish")
 assert_grep "publish job downloads the artifact"   'download-artifact' <(echo "$publish")
+overlay=$(cat "$W/overlay-report.yml")
+assert_eq "overlay report does not use a privileged container" \
+	"$(grep -cE -- '--privileged|/dev:/dev' <<<"$overlay" || true)" "0"
 
 # the build script is read-only by construction; the publish script never executes artifact content
 assert_eq "ci-build.sh pushes, opens and publishes nothing" "$(grep -cE 'git push|gh +(pr|issue|release)|"\$VL" +publish' "$ROOT/tools/ci-build.sh" || true)" "0"

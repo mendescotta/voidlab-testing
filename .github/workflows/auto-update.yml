@@ -34,7 +34,7 @@ jobs:
     permissions:
       contents: read
     container:
-      image: ghcr.io/void-linux/void-glibc-full:latest
+      image: ghcr.io/void-linux/void-glibc-full@sha256:9533af64ff46c0173b671ebc3477857c622afdb36eaf11f51419adb0a32f9f90
       # xbps-src builds in a chroot, which needs the privileges
       options: --privileged
       volumes:
@@ -44,7 +44,7 @@ jobs:
         run: |
           mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
           sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
-          xbps-install -Syu xbps && xbps-install -y git
+          xbps-install -Syu xbps && xbps-install -yu && xbps-install -y git
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -83,13 +83,13 @@ jobs:
       pull-requests: write
       issues: write
     container:
-      image: ghcr.io/void-linux/void-glibc-full:latest
+      image: ghcr.io/void-linux/void-glibc-full@sha256:9533af64ff46c0173b671ebc3477857c622afdb36eaf11f51419adb0a32f9f90
     steps:
       - name: Install git
         run: |
           mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
           sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
-          xbps-install -Syu xbps && xbps-install -y git
+          xbps-install -Syu xbps && xbps-install -yu && xbps-install -y git
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
