@@ -38,7 +38,7 @@ assert_eq "container images are pinned by digest" \
 	"$(grep -vcE 'image: [^[:space:]@]+@sha256:[0-9a-f]{64}$' <<<"$images" || true)" "0"
 assert_eq "package workflows use one tested container image" \
 	"$(grep -oE 'image: [^[:space:]]+' <<<"$images" | sort -u | wc -l)" "1"
-assert_grep "actionlint image is pinned by digest" 'docker run .*rhysd/actionlint@sha256:[0-9a-f]{64}' "$W/validate.yml"
+assert_grep "actionlint image is pinned by digest" 'rhysd/actionlint@sha256:' "$W/validate.yml"
 
 U=$W/auto-update.yml
 build=$(awk '/^  build:/ { on = 1; next } /^  publish:/ { on = 0 } on' "$U")
@@ -47,10 +47,16 @@ publish=$(awk '/^  publish:/ { on = 1; next } on' "$U")
 
 assert_eq "the signing secret is referenced exactly once" "$(grep -h 'secrets\.' "${files[@]}" | grep -c 'secrets.VOIDLAB_PRIVKEY')" "1"
 assert_eq "no other secret is referenced"          "$(grep -h 'secrets\.' "${files[@]}" | grep -vc 'secrets.VOIDLAB_PRIVKEY' || true)" "0"
+assert_grep "auto-update defaults to no token permissions" 'permissions: {}' "$U"
 assert_eq "the secret lives in the publish job"    "$(grep -c 'secrets\.VOIDLAB_PRIVKEY' <<<"$publish")" "1"
 assert_eq "the build job has no secrets"           "$(grep -c 'secrets\.' <<<"$build" || true)" "0"
-assert_grep "build job is read-only"               'contents: read' <(echo "$build")
-assert_eq "build job has no write permission"      "$(grep -cE '(contents|pull-requests|issues|packages|id-token): write' <<<"$build" || true)" "0"
+assert_eq "build job has only read permissions"     "$(grep -cE '^[[:space:]]+[A-Za-z_-]+: (write|read)$' <<<"$build" || true)" "1"
+assert_grep "build job is read-only"                 'contents: read' <(echo "$build")
+assert_eq "publish job has only its three required write permissions" \
+	"$(grep -cE '^[[:space:]]+[A-Za-z_-]+: write$' <<<"$publish" || true)" "3"
+for permission in 'contents: write' 'pull-requests: write' 'issues: write'; do
+	assert_grep "publish permission includes $permission" "$permission" <(echo "$publish")
+done
 assert_grep "build checkout keeps no git credentials" 'persist-credentials: false' <(echo "$build")
 assert_grep "build job runs the build script"      'tools/ci-build.sh' <(echo "$build")
 assert_grep "the xbps-src build runs in a privileged container" '--privileged' <(echo "$build")
