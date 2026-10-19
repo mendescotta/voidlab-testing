@@ -1,29 +1,21 @@
 #!/bin/sh
-# Started by leader-runit.c under runsvdir -P. Systemd builds call
-# gnome-session-ctl --signal-init once gnome-session-initialized.target is
-# reached; until org.gnome.SessionManager.Initialized is called,
-# gnome-session-service stays in its initialization phase: it never starts
-# the session's autostart applications and refuses Logout/Shutdown with
-# NotInRunning. Signal it once gnome-shell is on the bus -- and again
-# whenever gnome-session-service gets a new bus owner (runsv restarted
-# it), since a restarted instance starts back in that phase.
+# Upstream's gnome-session-signal-init.service calls Initialized once,
+# after gnome-shell reports it is ready (systemd Type=notify). Until then
+# gnome-session-service stays in its initialization phase, which is also
+# the only phase that accepts mutter's Setenv(WAYLAND_DISPLAY): signalling
+# earlier leaves D-Bus activated applications without a display. Without
+# systemd the shell reports readiness by registering as a client
+# (gnome-shell revert-remove-gsm.patch), so wait for that ClientAdded.
+# dinit runs this as a scripted service; under runsv, run it only once.
 exec 2>&1
-
-name_owner() {
-	gdbus call --session --dest org.freedesktop.DBus \
-		--object-path /org/freedesktop/DBus \
-		--method org.freedesktop.DBus.GetNameOwner "$1" 2>/dev/null
-}
-
-signaled=
-while :; do
-	owner=$(name_owner org.gnome.SessionManager)
-	if [ -n "$owner" ] && [ "$owner" != "$signaled" ] &&
-	   [ -n "$(name_owner org.gnome.Shell)" ]; then
-		gdbus call --session --dest org.gnome.SessionManager \
-			--object-path /org/gnome/SessionManager \
-			--method org.gnome.SessionManager.Initialized >/dev/null &&
-			signaled=$owner
-	fi
-	sleep 1
-done
+[ -p supervise/control ] && sv once .
+fifo="$XDG_RUNTIME_DIR/gnome-session-initialized.fifo"
+rm -f "$fifo" && mkfifo -m600 "$fifo" || exit 1
+gdbus monitor --session --dest org.gnome.SessionManager \
+	--object-path /org/gnome/SessionManager > "$fifo" & monitor=$!
+grep -q -m1 'SessionManager.ClientAdded' < "$fifo"
+kill "$monitor" 2>/dev/null
+rm -f "$fifo"
+exec gdbus call --session --dest org.gnome.SessionManager \
+	--object-path /org/gnome/SessionManager \
+	--method org.gnome.SessionManager.Initialized

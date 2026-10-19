@@ -70,8 +70,22 @@ printf 'type = internal\n' > "$service_dir/gnome-session.target"
 for component in "${components[@]}"; do
     [[ "$component" =~ ^[a-zA-Z0-9_-]+$ ]] || exit 2
     [[ -f "/etc/gnome-session/runit-sessions/$session.disabled" ]] && grep -qxF "$component" "/etc/gnome-session/runit-sessions/$session.disabled" && continue
+    # These plugins only idle without their system daemon; installing the
+    # daemon brings the plugin back at the next login.
+    case "$component" in
+        gsd-print-notifications) backend=cupsd ;;
+        gsd-smartcard) backend=pcscd ;;
+        gsd-usb-protection) backend=usbguard-daemon ;;
+        gsd-wwan) backend=ModemManager ;;
+        *) backend= ;;
+    esac
+    [[ -z "$backend" || -x "/usr/bin/$backend" ]] || continue
+    # gnome-session-initialized signals once and exits, like upstream's
+    # oneshot gnome-session-signal-init.service.
+    type=process
+    [[ "$component" = gnome-session-initialized ]] && type=scripted
     cat > "$service_dir/$component" <<EOF
-type = process
+type = $type
 command = /usr/libexec/gnome-session/dinit-component $component
 restart = on-failure
 log-type = buffer
@@ -83,7 +97,17 @@ EOF
     printf '%s: %s\n' "$relation" "$component" >> "$service_dir/gnome-session.target"
 done
 ctl start gnome-session.target
-while ctl is-started gnome-session-service >/dev/null 2>&1; do
-    ctl is-failed gnome-shell >/dev/null 2>&1 && exit 1
-    sleep 1 9>&- & wait $! || true
+# Block on dinit's service events instead of polling. The monitor starts
+# before the state is re-checked; the timeout bounds the wait if a transition
+# lands before it has attached, or if its connection drops.
+while :; do
+    timeout 300 dinit-monitor --user --exit --command true \
+        gnome-session-service gnome-shell 9>&- & monitor=$!
+    if ! ctl is-started gnome-session-service >/dev/null 2>&1; then
+        kill "$monitor" 2>/dev/null; break
+    fi
+    if ctl is-failed gnome-shell >/dev/null 2>&1; then
+        kill "$monitor" 2>/dev/null; exit 1
+    fi
+    wait "$monitor" || true
 done

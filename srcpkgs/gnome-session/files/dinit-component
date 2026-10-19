@@ -22,7 +22,10 @@ case "$1" in
     gnome-session-service)
         status=0
         /usr/libexec/gnome-session-service --session="${GNOME_SESSION_NAME:-gnome}" || status=$?
-        [ "$status" -ne 0 ] || kill -TERM "$GNOME_SESSION_LEADER_PID"
+        # As upstream (OnFailure=gnome-session-shutdown.target), the session
+        # ends with its manager: a restarted one would never be signalled
+        # Initialized again and would refuse Logout and Shutdown.
+        kill -TERM "$GNOME_SESSION_LEADER_PID"
         exit "$status" ;;
     gnome-shell)
         case "$GNOME_SESSION_NAME" in
