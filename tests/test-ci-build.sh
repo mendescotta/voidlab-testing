@@ -13,6 +13,8 @@ cp "$HERE/../tools/ci-build.sh" "$HERE/../tools/ci-lib.sh" tools/ 2>/dev/null ||
 for p in a b c z dep nv; do mkdir -p srcpkgs/$p; tmpl $p 1.0 1 > srcpkgs/$p/template; done
 printf "# never\nnv\n" > tools/never-publish
 git add -A; git commit -qm init
+mkdir -p "$W/.upstream"; git -C "$W/.upstream" init -q
+git -C "$W/.upstream" -c user.email=t@t -c user.name=t commit -q --allow-empty -m upstream
 # a pulled release package must be visible to xbps-src, which only reads hostdir/binpkgs
 mkdir -p repo "$T/empty"
 (cd repo && xbps-create -A noarch -n lib-1.0_1 -s t "$T/empty" >/dev/null && xbps-create -A noarch -n a-1.0_1 -s t "$T/empty" >/dev/null && XBPS_ARCH=x86_64 xbps-rindex -a lib-1.0_1.noarch.xbps a-1.0_1.noarch.xbps >/dev/null)
@@ -53,6 +55,8 @@ printf 'bump\ta\t1.0_1\t1.1\nbump\tb\t1.0_1\t2.0\nunpublished\tc\t1.0_1\t0.9_1\n
 run >/dev/null
 assert_grep "syncs"                              '^sync$' "$T/calls.log"
 assert_grep "pulls the release"                  '^pull$' "$T/calls.log"
+assert_eq   "the upstream commit used for the build is recorded" \
+	"$(cat "$W/out/upstream-commit")" "$(git -C "$W/.upstream" rev-parse HEAD)"
 assert_file "release packages are seeded into hostdir/binpkgs" "$W/hostdir/binpkgs/a-1.0_1.noarch.xbps"
 assert_eq   "hostdir/binpkgs is indexed" "$(XBPS_ARCH=x86_64 xbps-query -i -R --repository="$W/hostdir/binpkgs" -p pkgver a)" "a-1.0_1"
 assert_no   "a release package no template makes is not seeded (it would make xbps-src rebuild Void's package)" "$W/hostdir/binpkgs/lib-1.0_1.noarch.xbps"

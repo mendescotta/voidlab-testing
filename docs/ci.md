@@ -24,13 +24,30 @@ The build job runs the same package checks (`pkg_meta_problems` in `tools/ci-lib
 xbps-src's own provides and shlib-provides hooks) right after each build, so a package the publish job
 would reject fails there with its reason in the log. It stops starting new packages after 280 minutes
 (`AUTO_UPDATE_BUDGET_MIN`), so what was built is always handed over and the rest waits for the next run.
+The build artifact records the exact `void-packages` commit used by `voidlab sync`; the publish job
+fetches `common/shlibs` at that commit rather than from moving `master`.
+The package workflows pin the Void container to one image digest; workflow changes that update it should
+use a tested digest and update all references together. The actionlint container is pinned the same way.
+Update digests in a reviewed change after checking the relevant workflow runs. The Void package
+repositories are rolling, however, and CI deliberately updates the container's packages at runtime;
+the image pin makes the base environment reproducible, not the complete package-build environment.
+Repository setup and Git installation remain inline before checkout because checkout itself needs Git;
+the post-checkout setup action installs the remaining tools without repeating the system update.
+The auto-update build still needs a privileged container and `/dev` for xbps-src's chroot. It runs on a
+disposable GitHub-hosted runner, has no secrets and only a read-only token; the build script strips that
+token before running package build scripts. This is a residual trust boundary, not equivalent to a
+separate VM per package. The watchdog ignores in-progress runs and does not flag a transient failure
+while a successful scheduled run is still inside its freshness window. Overlay-report needs no chroot
+and runs without the privileged container.
 The pull-request gate checks, before anything is built, that every package a changed template depends on
 exists in the overlay or Void's repositories at a version its `>=` floor allows, and that a new
 subpackage Void does not ship has its `srcpkgs/<name>` symlink.
 `.github/workflows/overlay-report.yml` opens one weekly `Overlay report` issue with the templates
 official Void has caught up with (add the ones that must stay to `tools/keep-overlay.list`) and the
 newer upstream releases that are not auto-updated.
-`.github/workflows/watchdog.yml` opens a `ci-watchdog` issue when a scheduled run stops succeeding, and
+`.github/workflows/watchdog.yml` opens or updates a `ci-watchdog` issue for stale/missing successes,
+latest failures outside the success window, or API-check errors; it ignores in-progress runs and
+transient failures while a recent success remains, and
 `.github/workflows/check.yml` lints the templates and patches a pull request touches (`tools/ci-check.sh`).
 
 The steps are ordinary subcommands, so CI and a laptop behave the same:

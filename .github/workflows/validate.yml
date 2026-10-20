@@ -25,7 +25,8 @@ jobs:
           persist-credentials: false
 
       - name: actionlint
-        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7 -color
+        # rhysd/actionlint v1.7.7, pinned by image digest.
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9 -color
 
       - name: Job summary
         if: always()
