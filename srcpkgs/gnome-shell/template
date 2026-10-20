@@ -1,7 +1,7 @@
 # Template file for 'gnome-shell'
 pkgname=gnome-shell
 version=51.1
-revision=3
+revision=4
 build_style=meson
 build_helper=gir
 configure_args="-Dsystemd=false -Dtests=false
@@ -15,11 +15,13 @@ makedepends="gnome-control-center-devel at-spi2-atk-devel
  NetworkManager-devel pulseaudio-devel gtk4-devel gnome-autoar-devel gjs-devel
  gnome-bluetooth-devel pipewire-devel gstreamer1-devel gcr4-devel elogind-devel
  cairo-devel glycin-devel librsvg-devel"
-depends="elogind gnome-control-center gsettings-desktop-schemas gnome-menus libgdm
+# JS typelibs are invisible to shlib dependency detection. The shell also imports
+# the Gdm typelib (greeter, unlock dialog), but libgdm comes from gdm, which needs
+# gnome-shell: gnome-core pulls libgdm instead, so the two always build in order.
+depends="elogind gnome-control-center gsettings-desktop-schemas gnome-menus
  upower gstreamer1-pipewire gst-plugins-good1 ibus-gtk4
- glycin libnma-gtk4"  # JS typelibs are invisible to shlib dependency detection
-# libgdm is built from gdm, which depends on gnome-shell: a cycle if required to build
-checkdepends="xvfb-run mesa-dri ${depends/libgdm/}"
+ glycin libnma-gtk4"
+checkdepends="xvfb-run mesa-dri ${depends}"
 short_desc="GNOME core user interface"
 maintainer="Orphaned <orphan@voidlinux.org>"
 license="GPL-2.0-or-later"
