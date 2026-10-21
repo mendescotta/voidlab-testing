@@ -18,8 +18,9 @@ hostmakedepends="dconf gettext itstool pkg-config"
 makedepends="accountsservice-devel elogind-devel gettext-devel glib-devel
  iso-codes libSM-devel libcanberra-devel nss-devel pam-devel upower-devel
  plymouth-devel libgudev-devel polkit-devel"
-# gnome-shell depends on libgdm, so gnome-shell and gnome-session are
-# pulled in through the gdm-session subpackage to avoid a build-time cycle.
+# gnome-shell and gnome-session are pulled in through the gdm-session
+# subpackage; gnome-shell must not depend on libgdm (gnome-core does), or
+# building gdm would hit a build-time cycle through gnome-shell.
 depends="gdm-session>=${version}_${revision} gnome-settings-daemon gsettings-desktop-schemas
  $(vopt_if x11 'xorg-server xorg-server-xwayland xrdb')"
 checkdepends="check-devel"
