@@ -1,7 +1,7 @@
 # Template file for 'gnome-core'
 pkgname=gnome-core
 version=51.0
-revision=7
+revision=8
 metapackage=yes
 short_desc="GNOME meta-package for Void Linux - core components"
 maintainer="Orphaned <orphan@voidlinux.org>"
@@ -11,6 +11,7 @@ homepage="https://www.gnome.org"
 # libgdm: gnome-shell imports the Gdm typelib but cannot depend on it (see gnome-shell)
 depends="
  adwaita-fonts>=${version}
+ adwaita-icon-theme
  gnome-backgrounds>=${version}
  gnome-control-center
  gnome-keyring>=${version}
