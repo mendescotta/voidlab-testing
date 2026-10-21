@@ -93,7 +93,7 @@ GNOME templates.
 
 | | runit (stock Void) | dinit (dinit-void) |
 |---|---|---|
-| system services | Void's `vsv` services from the templates (`gdm/files/gdm`, `elogind/files/elogind`) | `dinit-void/void/{gdm,elogind,dbus,polkitd,upower}.service`, `dinit-dm` helper |
+| system services | runit service directories in `/etc/sv` (`gdm/files/gdm`, `elogind/files/elogind`, installed by the templates), enabled with `ln -s /etc/sv/<name> /var/service/` and managed with `sv` | `dinit-void/void/{gdm,elogind,dbus,polkitd,upower}.service`, `dinit-dm` helper |
 | elogind start | runsv; D-Bus activation goes through `elogind.dbus-activate`, which hands off to `sv start` | dinit; `elogind.dbus-activate` hands off to `dinitctl start elogind` |
 | session bus | from `gdm-wayland-session` (or `dbus-run-session-if-needed`) | turnstile's user dinit runs a shared bus (`/usr/libexec/gnome-session/user-dbus`, ISO overlay) |
 | PipeWire | XDG autostart in the session (Void handbook layout) | user dinit services in `/usr/lib/dinit.d/user/boot.d` (ISO overlay) |
