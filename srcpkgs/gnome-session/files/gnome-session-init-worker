@@ -39,7 +39,9 @@ stop() {
     trap '' TERM INT HUP
     local pid
     for pid in "${!name_of[@]}"; do kill "$pid" 2>/dev/null || true; done
-    wait || true
+    # Each pid on its own: a bare wait can spin forever on a job that bash
+    # lists as running but has already reaped (ECHILD).
+    for pid in "${!name_of[@]}"; do wait "$pid" 2>/dev/null || true; done
     # As org.gnome.Shell@wayland.service's ExecStopPost, unless the runtime
     # directory (and so the bus) already belongs to a newer login.
     if [[ /proc/self/fd/9 -ef "$XDG_RUNTIME_DIR/gnome-session.lock" ]]; then
