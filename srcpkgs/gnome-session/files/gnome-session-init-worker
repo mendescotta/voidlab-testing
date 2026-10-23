@@ -103,6 +103,29 @@ while [[ -e "$XDG_RUNTIME_DIR/wayland-$n" || -e "$XDG_RUNTIME_DIR/wayland-$n.loc
 done
 wayland_display=wayland-$n
 
+# gnome-session 51 skips the autostart entries that set
+# X-GNOME-Autostart-Phase; upstream's systemd user units stand in for them.
+# As xdg-user-dirs.service, and as gnome-keyring's pkcs11, secrets and ssh
+# entries, whose SSH_AUTH_SOCK gnome-session used to export.
+if [[ "$session" != gnome-login ]]; then
+    if command -v xdg-user-dirs-update >/dev/null; then
+        xdg-user-dirs-update 9>&- || true
+    fi
+    if command -v gnome-keyring-daemon >/dev/null; then
+        keyring_env=()
+        while IFS= read -r line; do
+            case "$line" in
+                SSH_AUTH_SOCK=?* | GNOME_KEYRING_CONTROL=?*)
+                    export "$line"
+                    keyring_env+=("${line%%=*}") ;;
+            esac
+        done < <(gnome-keyring-daemon --start --components=pkcs11,secrets,ssh 9>&-)
+        if [[ ${#keyring_env[@]} -gt 0 ]]; then
+            dbus-update-activation-environment "${keyring_env[@]}" 9>&- || true
+        fi
+    fi
+fi
+
 spawn gnome-session-service
 gdbus wait --session --timeout 30 org.gnome.SessionManager
 # gnome-session stays in its initialization phase, the only one that accepts
