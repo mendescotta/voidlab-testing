@@ -5,6 +5,36 @@ Reviewed on 2026-10-21 against void-packages `48066ac6` (2026-10-16), the
 published `repo` release and upstream PR
 [void-linux/void-packages#59394](https://github.com/void-linux/void-packages/pull/59394).
 
+## Stock branch (`gnome51`)
+
+The upstreamable version of this work is the `gnome51` branch of
+`mendescotta/void-packages`, in `~/Projects/voidlab/void-packages`. It
+carries no overlay changes and runs on Void's platform libraries: gtk4 4.22,
+glib 2.88, accountsservice 23 and elogind 252. Its README describes the
+patchset and has the install instructions (`./install-gnome51.sh`, or
+`xbps-src` by hand). The session design is the one described below, without
+the dinit/turnstile parts.
+
+How it differs from the overlay:
+
+- gnome-control-center and gnome-initial-setup stay at 50.0, and nautilus
+  stays at 50.2.2. Their 51 releases need gtk4 4.24 and glib 2.89+, and the
+  branch does not bump gtk4.
+- gnome-desktop 51.0 is built without the gnome-desktop-gtk3 split. It keeps
+  upstream's `libgnome-desktop-3.so.21`; the overlay listed `.so.20`, which
+  does not match upstream. gnome-shell 51 imports `GnomeQR` at runtime, so
+  gnome-desktop 44 gives a black greeter. xbps cannot see that dependency.
+  The overlay hid it because it always had gnome-desktop 51.
+- GnomeRR was removed upstream (`c030c776`, 51.alpha). The packages that
+  still use it, plus gnome-flashback, are removed on the branch and added to
+  `removed-packages`: all of Budgie with magpie, gnome-screensaver, and
+  gnome-flashback. openbox no longer ships its GNOME session. cheese, eog,
+  evince, evolution, gnome-panel, totem and xdg-desktop-portal-gtk are
+  revbumped.
+
+Bare-metal test (2026-10-23): the gdm 51 greeter comes up on runit with
+NVIDIA. Login, power-menu and logout checks are in progress.
+
 ## Why Void is still on GNOME 48
 
 Void ships GNOME 48 (gnome-shell 48.7, gdm 48.0, gnome-session 48.0). The
