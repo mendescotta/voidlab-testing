@@ -1,6 +1,6 @@
 # Template file for 'gnome-software'
 pkgname=gnome-software
-version=51.0
+version=51.1
 revision=1
 build_style=meson
 configure_args="-Dpackagekit=false -Dfwupd=false
@@ -19,7 +19,7 @@ license="GPL-3.0-or-later"
 homepage="https://gitlab.gnome.org/GNOME/gnome-software"
 changelog="https://gitlab.gnome.org/GNOME/gnome-software/-/raw/main/NEWS"
 distfiles="https://gitlab.gnome.org/GNOME/gnome-software/-/archive/${version}/gnome-software-${version}.tar.gz"
-checksum=803c79b8b5705aab4644acf130ca5bbdb943b88e9df3bee022e41eb130dd1cf4
+checksum=9a715f6dc1bc2c055ef1215f8b9f53d862176fe0accedf5c6f62e920d3a8d1ee
 make_check=no # Requires system dbus
 
 build_options="gtk_doc"
