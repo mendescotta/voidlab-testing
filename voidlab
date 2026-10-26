@@ -32,7 +32,11 @@ RELDIR=$ROOT/.release
 die()  { echo "voidlab: $*" >&2; exit 1; }
 need() { local t; for t; do command -v "$t" >/dev/null || die "missing tool: $t"; done; }
 need_upstream() { [ -d "$UP/.git" ] || die "no upstream checkout; run: voidlab sync"; }
-xsrc() { (cd "$UP" && ./xbps-src ${XSRC_ARCH:+-A "$XSRC_ARCH"} -H "$HOSTDIR" -m "$MASTERDIR" "$@"); }
+xsrc() {
+	local jobs=${VOIDLAB_MAKEJOBS:-${XBPS_MAKEJOBS:-}}
+	[ -z "$jobs" ] || [[ $jobs =~ ^[1-9][0-9]*$ ]] || die "invalid make jobs: $jobs"
+	(cd "$UP" && ./xbps-src ${XSRC_ARCH:+-A "$XSRC_ARCH"} ${jobs:+-j "$jobs"} -H "$HOSTDIR" -m "$MASTERDIR" "$@")
+}
 no_running_build() {
 	need pgrep
 	if pgrep -x xbps-src >/dev/null; then die "another xbps-src build is running"; fi

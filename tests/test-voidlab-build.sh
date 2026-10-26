@@ -19,7 +19,8 @@ tmpl good 1.0 1 > srcpkgs/good/template; tmpl good2 1.0 1 > srcpkgs/good2/templa
 tmpl bad 1.0 1 > srcpkgs/bad/template; : > common/shlibs
 cat > xbps-src <<'F'
 #!/bin/sh
-while [ $# -gt 0 ]; do case $1 in -H) H=$2; shift 2 ;; -m) shift 2 ;; *) break ;; esac; done
+while [ $# -gt 0 ]; do case $1 in -H) H=$2; shift 2 ;; -m) shift 2 ;; -j) J=$2; shift 2 ;; *) break ;; esac; done
+[ -z "${J:-}" ] || printf '%s\n' "$J" >> "$H/jobs"
 case "$1 $2" in
 clean\ *) echo "$2" >> "$H/cleaned" ;;
 "pkg bad") exit 1 ;;
@@ -43,6 +44,14 @@ rm -f "$R/repo/good-1.0_1.x86_64.xbps"
 "$R/voidlab" build good2 >/dev/null 2>&1
 assert_file "new build copied" "$R/repo/good2-1.0_1.x86_64.xbps"
 assert_no  "old build not re-copied" "$R/repo/good-1.0_1.x86_64.xbps"
+
+VOIDLAB_MAKEJOBS=3 "$R/voidlab" build good2 >/dev/null 2>&1
+assert_grep "explicit job limit reaches xbps-src" '^3$' "$R/hostdir/jobs"
+if VOIDLAB_MAKEJOBS=bad "$R/voidlab" build good2 >/dev/null 2>&1; then
+	fail "invalid job limit was accepted"
+else
+	ok "invalid job limit rejected"
+fi
 
 # xbps-rindex -f keeps the LAST file of a package, so files must be passed oldest version first
 # (a glob sorts _10 before _9, which indexed the older revision and then deleted the newer one)
