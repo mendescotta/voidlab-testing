@@ -2,16 +2,16 @@
 pkgname=cosmic-settings-daemon
 version=1.11.0
 revision=1
-archs="x86_64*"
 build_style=cargo
 configure_args="--workspace"
-hostmakedepends="pkg-config just"
-makedepends="clang22-devel eudev-libudev-devel libinput-devel geoclue2-devel pulseaudio-devel pipewire-devel openssl-devel libxkbcommon-devel"
+hostmakedepends="pkg-config just clang libclang"
+makedepends="eudev-libudev-devel libinput-devel geoclue2-devel
+ pulseaudio-devel pipewire-devel openssl-devel libxkbcommon-devel"
 depends="acpid alsa-utils cosmic-sound-theme geoclue2 libvarlink playerctl
  wireplumber xdg-utils"
 short_desc="COSMIC settings daemon"
 maintainer="Bella109 <belladev109@proton.me>"
-license="GPL-3.0-only"
+license="GPL-3.0-only AND MPL-2.0"
 homepage="https://github.com/pop-os/cosmic-settings-daemon"
 distfiles="https://github.com/pop-os/cosmic-settings-daemon/archive/refs/tags/epoch-${version}.tar.gz"
 checksum=1cc494c028a59a0356547c834421495da326622f837221726c15fceb14f3f9f0
@@ -19,6 +19,5 @@ checksum=1cc494c028a59a0356547c834421495da326622f837221726c15fceb14f3f9f0
 export GEOCLUE_AGENT="/usr/libexec/geoclue-2.0/demos/agent"
 
 do_install() {
-	just rootdir="${DESTDIR}" cargo-target-dir="target/${XBPS_RUST_TARGET}" install
-	vinstall ${FILESDIR}/custom 644 usr/share/cosmic/com.system76.CosmicSettings.Shortcuts/v1
+	just rootdir="${DESTDIR}" cargo-target-dir="target/${RUST_TARGET}" install
 }
