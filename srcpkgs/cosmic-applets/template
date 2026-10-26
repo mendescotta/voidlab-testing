@@ -2,24 +2,19 @@
 pkgname=cosmic-applets
 version=1.11.0
 revision=1
-archs="x86_64*"
 build_style=cargo
-configure_args="--workspace"
-hostmakedepends="pkg-config just $(vopt_if sccache "rust-sccache")"
-makedepends="libxkbcommon-devel eudev-libudev-devel dbus-devel pulseaudio-devel libinput-devel pipewire-devel clang22-devel"
+configure_args="--package cosmic-applets"
+hostmakedepends="pkg-config just clang libclang"
+makedepends="libxkbcommon-devel eudev-libudev-devel dbus-devel
+ pulseaudio-devel libinput-devel pipewire-devel"
 depends="cosmic-icons"
 short_desc="Applets for COSMIC"
 maintainer="Bella109 <belladev109@proton.me>"
-license="GPL-3.0-only"
+license="GPL-3.0-only AND MPL-2.0"
 homepage="https://github.com/pop-os/cosmic-applets"
 distfiles="https://github.com/pop-os/cosmic-applets/archive/refs/tags/epoch-${version}.tar.gz"
 checksum=d2ad09b72a2dcba2a17f12e557f0e21dc60171eefa54390e4b67bb058f9180e2
-build_options="sccache"
-
-pre_build() {
-	$(vopt_if sccache "export RUSTC_WRAPPER=/usr/bin/sccache")
-}
 
 do_install() {
-	just rootdir=${DESTDIR} target="${RUST_TARGET}/release" install
+	just rootdir="${DESTDIR}" target="${RUST_TARGET}/release" install
 }
