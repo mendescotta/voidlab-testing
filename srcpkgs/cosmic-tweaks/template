@@ -1,22 +1,20 @@
 # Template file for 'cosmic-tweaks'
 pkgname=cosmic-tweaks
 version=0.2.5
-revision=1
-archs="x86_64*"
-hostmakedepends="pkg-config cargo just"
+revision=2
+build_style=cargo
+hostmakedepends="pkg-config"
 makedepends="libxkbcommon-devel openssl-devel"
-depends="libssl3 libxkbcommon"
 short_desc="Tweaks for COSMIC"
 maintainer="Bella109 <belladev109@proton.me>"
 license="GPL-3.0-only"
-homepage="https://github.com/cosmic-utils/tweaks"
-distfiles="https://github.com/cosmic-utils/tweaks/archive/refs/tags/${version}.tar.gz"
-checksum=adc3c335d7bc0f9bb9b2882a8e53e15e75676021a1ed192d1171cf3cbaf15bc0
-
-do_build() {
-	just build-release
-}
+homepage="https://github.com/cosmic-utils/cosmic-ext-tweaks"
+distfiles="https://github.com/cosmic-utils/cosmic-ext-tweaks/archive/refs/tags/${version}.tar.gz"
+checksum=bb8f7fa84315149f84e38ddf6d969c8d397c3ce3cbf5e04c918e5ee949505da6
 
 do_install() {
-	just rootdir=${DESTDIR} install
+	vbin "target/${RUST_TARGET}/release/cosmic-ext-tweaks"
+	vinstall res/app.desktop 644 usr/share/applications dev.edfloreshz.CosmicTweaks.desktop
+	vinstall res/icons/hicolor/scalable/apps/icon.svg 644 \
+		usr/share/icons/hicolor/scalable/apps dev.edfloreshz.CosmicTweaks.svg
 }
