@@ -1,8 +1,7 @@
 # Template file for 'pop-launcher'
 pkgname=pop-launcher
-version=1.10.0
+version=1.11.0
 revision=1
-archs="x86_64*"
 build_style=cargo
 configure_args="--workspace"
 hostmakedepends="pkg-config just"
@@ -13,14 +12,8 @@ maintainer="Bella109 <belladev109@proton.me>"
 license="MPL-2.0 AND GPL-3.0-only"
 homepage="https://github.com/pop-os/launcher"
 distfiles="https://github.com/pop-os/launcher/archive/refs/tags/epoch-${version}.tar.gz"
-checksum=fbad44078bbebec9e2bc5f03d31a04a08191a877d7d524cf9e34f364e75c2429
-build_options="sccache"
-hostmakedepends+=" $(vopt_if sccache rust-sccache)"
-
-pre_build() {
-	$(vopt_if sccache "export RUSTC_WRAPPER=/usr/bin/sccache")
-}
+checksum=5c36c3304c48c047b5b6a1ae645f0ceb44447aec82db862fb93be6184af3fdc7
 
 do_install() {
-	just target-dir="target/${RUST_TARGET}/release" rootdir=${DESTDIR} install
+	just target-dir="target/${RUST_TARGET}/release" rootdir="${DESTDIR}" install
 }
