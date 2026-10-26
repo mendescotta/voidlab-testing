@@ -2,13 +2,13 @@
 pkgname=xdg-desktop-portal-cosmic
 version=1.11.0
 revision=1
-archs="x86_64*"
 build_style=cargo
 configure_args="--no-default-features"
-hostmakedepends="pkg-config just"
-makedepends="libxkbcommon-devel libzstd-devel pipewire-devel clang libglib-devel libgbm-devel gstreamer1-devel"
+hostmakedepends="pkg-config just clang libclang"
+makedepends="libxkbcommon-devel libzstd-devel pipewire-devel libglib-devel
+ libgbm-devel gstreamer1-devel"
 depends="cosmic-icons wayland xdg-desktop-portal"
-short_desc="Cosmic backend for xdg-desktop-portal"
+short_desc="COSMIC backend for xdg-desktop-portal"
 maintainer="Bella109 <belladev109@proton.me>"
 license="GPL-3.0-only"
 homepage="https://github.com/pop-os/xdg-desktop-portal-cosmic"
