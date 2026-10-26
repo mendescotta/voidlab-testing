@@ -2,15 +2,15 @@
 pkgname=cosmic-settings
 version=1.11.0
 revision=1
-archs="x86_64*"
 build_style=cargo
 configure_args="--workspace"
-hostmakedepends="pkg-config just"
-makedepends="libxkbcommon-devel eudev-libudev-devel libinput-devel mold pipewire-devel clang22-devel libdav1d-devel"
+hostmakedepends="pkg-config just clang libclang"
+makedepends="libxkbcommon-devel eudev-libudev-devel libinput-devel
+ pipewire-devel libdav1d-devel"
 depends="accountsservice cosmic-icons cosmic-randr cosmic-settings-daemon
  fontconfig gettext xkeyboard-config iso-codes NetworkManager
  power-profiles-daemon wayland"
-short_desc="Settings App for COSMIC"
+short_desc="Settings application for COSMIC"
 maintainer="Bella109 <belladev109@proton.me>"
 license="GPL-3.0-only AND MPL-2.0"
 homepage="https://github.com/pop-os/cosmic-settings"
