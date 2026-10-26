@@ -1,0 +1,15 @@
+Starting COSMIC
+===============
+
+Choose COSMIC in a display manager, or run start-cosmic from a local TTY
+login. The PAM session must register with elogind and provide a valid
+XDG_RUNTIME_DIR. Do not create /run/user directories in shell profiles.
+
+For audio, configure PipeWire and WirePlumber as described in the Void
+Handbook:
+https://docs.voidlinux.org/config/media/pipewire.html
+
+The desktop metapackages do not edit PipeWire configuration, keyboard
+layouts, application favorites, or per-user directories during installation.
+Choose the keyboard layout in COSMIC Settings. Existing locally generated
+configuration from older package versions is not removed automatically.
