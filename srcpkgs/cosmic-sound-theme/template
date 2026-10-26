@@ -1,6 +1,6 @@
 # Template file for 'cosmic-sound-theme'
 pkgname=cosmic-sound-theme
-version=1.9.0
+version=1.11.0
 revision=1
 build_style=meson
 hostmakedepends="pkg-config"
@@ -9,4 +9,4 @@ maintainer="Bella109 <belladev109@proton.me>"
 license="CC-BY-SA-4.0"
 homepage="https://github.com/pop-os/cosmic-sound-theme"
 distfiles="https://github.com/pop-os/cosmic-sound-theme/archive/refs/tags/epoch-${version}.tar.gz"
-checksum=f9e1f34cb7b36475b25865976ed77aa59f17144dab0cc14bcf9938606ac042ed
+checksum=b523afe23c4b5bb58261156564b7527a1f719bc9b9917f9c6bd3c763d823291c
