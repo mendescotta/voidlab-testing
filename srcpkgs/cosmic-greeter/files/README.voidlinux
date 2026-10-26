@@ -1,0 +1,12 @@
+COSMIC greeter
+==============
+
+Enable the dbus, cosmic-greeter-daemon and cosmic-greeter runit services.
+Disable any other display-manager service before enabling cosmic-greeter.
+
+The greeter uses /etc/greetd/cosmic-greeter.toml; it does not replace greetd's
+default configuration. The greeter account is _cosmicgreeter.
+
+elogind is required for session management. It can activate through D-Bus;
+running a separate elogind service is optional. PAM's system-local-login
+stack registers sessions and creates the runtime directory.
