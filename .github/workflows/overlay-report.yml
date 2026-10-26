@@ -27,7 +27,11 @@ jobs:
           mkdir -p /etc/xbps.d && cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
           sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
           retry() { n=0; until "$@"; do n=$((n + 1)); [ "$n" -lt 3 ] || return 1; echo "retrying ($n/3): $*" >&2; sleep 5; done; }
-          retry xbps-install -Syu xbps
+          if ! retry xbps-install -Syu xbps; then
+            echo "CI repository unavailable; falling back to the default Void repository" >&2
+            sed -i 's|repo-ci|repo-default|g' /etc/xbps.d/*-repository-*.conf
+            retry xbps-install -Syu xbps
+          fi
           retry xbps-install -yu
           retry xbps-install -y git
 
