@@ -2,10 +2,8 @@
 pkgname=cosmic-workspaces-epoch
 version=1.11.0
 revision=1
-archs="x86_64*"
-build_style=gnu-makefile
-build_helper="rust"
-hostmakedepends="pkg-config cargo"
+build_style=cargo
+hostmakedepends="pkg-config"
 makedepends="libxkbcommon-devel libgbm-devel eudev-libudev-devel libinput-devel"
 depends="cosmic-icons wayland"
 short_desc="COSMIC workspaces"
@@ -14,3 +12,7 @@ license="GPL-3.0-only"
 homepage="https://github.com/pop-os/cosmic-workspaces-epoch"
 distfiles="https://github.com/pop-os/cosmic-workspaces-epoch/archive/refs/tags/epoch-${version}.tar.gz"
 checksum=4dad3cd1fffe5b377c84948598c666493e5a053e6e1105a958f20a73bea92eab
+
+do_install() {
+	make CARGO_TARGET_DIR="target/${RUST_TARGET}" DESTDIR="${DESTDIR}" install
+}
