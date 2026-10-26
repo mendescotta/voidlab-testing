@@ -2,13 +2,13 @@
 pkgname=cosmic-comp
 version=1.11.0
 revision=1
-archs="x86_64*"
 build_style=cargo
 configure_args="--workspace --no-default-features --features logind"
 hostmakedepends="pkg-config just"
-makedepends="eudev-libudev-devel libseat-devel libxkbcommon-devel libinput-devel pixman-devel libgbm-devel libdisplay-info-devel"
+makedepends="eudev-libudev-devel libseat-devel libxkbcommon-devel
+ libinput-devel pixman-devel libgbm-devel libdisplay-info-devel"
 depends="elogind fontconfig wayland"
-short_desc="Wayland compositor of pop-os cosmic shell"
+short_desc="Wayland compositor for COSMIC"
 maintainer="Bella109 <belladev109@proton.me>"
 license="GPL-3.0-only"
 homepage="https://github.com/pop-os/cosmic-comp"
@@ -16,6 +16,5 @@ distfiles="https://github.com/pop-os/cosmic-comp/archive/refs/tags/epoch-${versi
 checksum=c07778440f25e909358a37f293ddf403a28a153b02eedb30b61b846a7142ba60
 
 do_install() {
-	just rootdir="${DESTDIR}" cargo-target-dir="target/${XBPS_RUST_TARGET}" install
-	vinstall data/cosmic.desktop 644 usr/share/wayland-session/cosmic.desktop
+	just rootdir="${DESTDIR}" cargo-target-dir="target/${RUST_TARGET}" install
 }

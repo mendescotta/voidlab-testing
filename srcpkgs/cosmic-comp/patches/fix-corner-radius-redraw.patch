@@ -1,15 +1,6 @@
-Why: upstream's set/unset_corner_radius and set/unset_padding handlers are
-no-op stubs, so a live change of a mapped window's rounding (e.g. the theme's
-roundness at runtime) never schedules a redraw and the old corners linger until
-something else repaints. Schedule a render on the surface's output for all
-four. When the radius is set before the first buffer commit (initial map),
-visible_output_for_surface() is None and this quietly does nothing; no log
-message, unlike upstream's attempt. Still needed against 1.10.0 (the handlers
-are still empty there).
-Upstream: https://github.com/pop-os/cosmic-comp/pull/2543 (same fix, reverted
-because the redraw failed at initial map; a maintainer suggested dropping the
-log message instead, which is what this does)
-Drop when: upstream's corner_radius handlers schedule a redraw themselves.
+Why: Redraw surfaces after changes to corner radii or padding.
+Upstream: https://github.com/pop-os/cosmic-comp/pull/2543
+Drop when: upstream schedules redraws for these protocol requests.
 
 --- a/src/wayland/handlers/corner_radius.rs
 +++ b/src/wayland/handlers/corner_radius.rs
@@ -30,22 +21,23 @@ Drop when: upstream's corner_radius handlers schedule a redraw themselves.
 +    fn set_corner_radius(&mut self, data: &CornerRadiusData) {
 +        force_redraw(self, data);
 +    }
-+
+
+-    fn unset_corner_radius(&mut self, _data: &CornerRadiusData) {}
 +    fn unset_corner_radius(&mut self, data: &CornerRadiusData) {
 +        force_redraw(self, data);
 +    }
 
--    fn unset_corner_radius(&mut self, _data: &CornerRadiusData) {}
+-    fn set_padding(&mut self, _data: &CornerRadiusData) {}
 +    fn set_padding(&mut self, data: &CornerRadiusData) {
 +        force_redraw(self, data);
 +    }
-+
+
+-    fn unset_padding(&mut self, _data: &CornerRadiusData) {}
 +    fn unset_padding(&mut self, data: &CornerRadiusData) {
 +        force_redraw(self, data);
 +    }
 +}
-
--    fn set_padding(&mut self, _data: &CornerRadiusData) {}
++
 +fn force_redraw(state: &mut State, data: &CornerRadiusData) -> Option<()> {
 +    let guard = data.lock().unwrap();
 +    let shell = state.common.shell.read();
@@ -71,8 +63,7 @@ Drop when: upstream's corner_radius handlers schedule a redraw themselves.
 +            shell.visible_output_for_surface(surface.wl_surface())?
 +        }
 +    };
-
--    fn unset_padding(&mut self, _data: &CornerRadiusData) {}
++
 +    state.backend.schedule_render(output);
 +    Some(())
  }
