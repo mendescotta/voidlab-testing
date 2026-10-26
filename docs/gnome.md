@@ -374,3 +374,24 @@ A stock runit Void install, not an ISO. The disk image is in
 
 No JS errors in `~/.cache/gdm/session.log`. "Locale not supported" comes from
 the test image's unconfigured glibc-locales, not from GNOME.
+
+## Bare-metal test of the stock branch (2026-10-23)
+
+This host (NVIDIA laptop) running `gnome51` packages (gnome-shell/mutter
+51.1, gnome-session 51.0, gdm 51.1, g-c-c 50.0) on the overlay's glib 2.90,
+gtk4 4.24 and elogind 257. Logs from `/usr/local/sbin/gnome-validate-log`.
+
+| check | result |
+|---|---|
+| poweroff from the session menu | clean: the Shell exits, gdm briefly respawns a greeter, which gets SIGTERM; runit stage 3 leaves only kernel threads. The only teardown noise is a Gjs-CRITICAL on a disposed `KeyboardBrightnessToggle` |
+| greeter init worker | after the per-pid `wait` fix, greeter.log stays small (4.8K vs 2.5 GB before) and no worker spins after login |
+| boot → greeter → login | works, gdm debug lines reach socklog |
+| Nautilus cold start | ~0.5 s: the first portal setting is read 62 ms after exec. The ~25 s portal stall seen earlier did not come back |
+| autostart | gnome-session 51 skips every autostart entry with `X-GNOME-Autostart-Phase` ("no longer manages session services"): gnome-keyring pkcs11/secrets/ssh, at-spi-dbus-bus, xdg-user-dirs. Result: no SSH agent, no `xdg-user-dirs-update`, and an extra D-Bus-activated keyring daemon. **Fixed** (gnome51 eecb9bbf66, overlay 1fd2ef9 revision 17): outside the greeter the init worker runs `xdg-user-dirs-update` and `gnome-keyring-daemon --start --components=pkcs11,secrets,ssh`, and exports `SSH_AUTH_SOCK`. at-spi is left to D-Bus activation, as upstream's `at-spi-dbus-bus.service` |
+| GOA | evolution-source-registry timed out on `org.gnome.OnlineAccounts`. Cause: the local stub `Exec=/bin/true`. dbus-daemon takes exit 0 as "forked" and waits out its 25 s activation timeout. Local fix: the stubs now run `/bin/false`, so activation fails in milliseconds |
+| polkit, Nautilus | fine (user) |
+| suspend | not configured on this host |
+
+Still to check: lock/unlock, logout → second login (also confirms
+`SSH_AUTH_SOCK` in the session and a single keyring daemon), Settings (g-c-c
+50 on 51 schemas). The teardown Gjs-CRITICAL is upstream gnome-shell's.
