@@ -1,33 +1,37 @@
 # Template file for 'cosmic-greeter'
 pkgname=cosmic-greeter
-version=1.10.0
+version=1.11.0
 revision=1
-archs="x86_64*"
 build_style=cargo
+conf_files="/etc/greetd/cosmic-greeter.toml"
 configure_args="--workspace --no-default-features --features logind,networkmanager,upower"
-hostmakedepends="pkg-config just"
-makedepends="libxkbcommon-devel eudev-libudev-devel git pam-devel libinput-devel llvm22-devel libdav1d-devel"
-depends="cosmic-comp cosmic-icons greetd libdav1d libxkbcommon pam-libs elogind NetworkManager upower wayland"
-short_desc="COSMIC Display Manager"
+hostmakedepends="pkg-config clang23-devel libclang23"
+makedepends="libxkbcommon-devel eudev-libudev-devel pam-devel libinput-devel
+ libdav1d-devel"
+depends="cosmic-comp cosmic-icons elogind greetd NetworkManager upower wayland"
+short_desc="Display manager and screen locker for COSMIC"
 maintainer="Bella109 <belladev109@proton.me>"
 license="GPL-3.0-only"
 homepage="https://github.com/pop-os/cosmic-greeter"
 distfiles="https://github.com/pop-os/cosmic-greeter/archive/refs/tags/epoch-${version}.tar.gz"
-checksum=b4dcf23c2bc9719de4aa2c4c315ed30d1d142477b213fcca3d61856ef46dd9b8
+checksum=f31c5bac8e50ed5df75cb7d07fb8167e7835dc22b3438a48c8c1f27e7de36e48
 system_accounts="_cosmicgreeter"
 _cosmicgreeter_homedir="/var/lib/cosmic-greeter"
-_cosmicgreeter_descr="Cosmic Greeter Account"
+_cosmicgreeter_descr="COSMIC greeter"
 _cosmicgreeter_groups="video,input"
 make_dirs="/var/lib/cosmic-greeter 0755 _cosmicgreeter _cosmicgreeter"
 
 export VERGEN_GIT_SHA="unknown"
 export VERGEN_GIT_COMMIT_DATE="unknown"
+export LLVM_CONFIG_PATH="/usr/bin/llvm-config-23"
 
 do_install() {
-	just rootdir="${DESTDIR}" cargo-target-dir="target/${RUST_TARGET}" install
+	vbin "target/${RUST_TARGET}/release/cosmic-greeter"
+	vbin "target/${RUST_TARGET}/release/cosmic-greeter-daemon"
 	vinstall cosmic-greeter.toml 644 etc/greetd
 	vsv cosmic-greeter-daemon
 	vsv cosmic-greeter
-	vinstall debian/cosmic-greeter.pam 644 /etc/pam.d/ cosmic-greeter
-	vinstall dbus/com.system76.CosmicGreeter.conf 644 /usr/share/dbus-1/system.d
+	vinstall debian/cosmic-greeter.pam 644 etc/pam.d cosmic-greeter
+	vinstall dbus/com.system76.CosmicGreeter.conf 644 usr/share/dbus-1/system.d
+	vdoc "${FILESDIR}/README.voidlinux"
 }
