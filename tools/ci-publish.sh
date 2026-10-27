@@ -30,6 +30,11 @@ export LC_ALL=C
 
 die() { echo "ci-publish: $*" >&2; exit 1; }
 log() { printf '=> %s\n' "$*"; }
+# No-op, rejected-only and failed runs must not request an attestation.
+if [ -n "${GITHUB_OUTPUT:-}" ]; then
+	printf 'attest=false\n' >> "$GITHUB_OUTPUT" || die "cannot initialize attestation output"
+	[ -n "${RUNNER_TEMP:-}" ] || die "RUNNER_TEMP is required for attestation staging"
+fi
 declare -A REJECTED=()
 # reject <template> <reason>: keep that template's packages out of this release (reported as an issue)
 reject() { log "rejected $1: $2"; REJECTED[$1]+="$2"$'\n'; }
@@ -351,4 +356,15 @@ trap 'rm -f "$VOIDLAB_KEY"; rm -rf "$CHK" "$CHK".*' EXIT
 (umask 077 && printf '%s\n' "$VOIDLAB_PRIVKEY" > "$VOIDLAB_KEY")
 log "publishing ${#accepted[@]} packages"
 "$VL" publish </dev/null || die "publish failed"
+# Preserve only accepted files from the exact distribution uploaded by `voidlab publish`.
+# Set the output only after every copy succeeds, including on partially rejected runs.
+if [ -n "${GITHUB_OUTPUT:-}" ]; then
+	attest_dir="$RUNNER_TEMP/voidlab-attest"
+	rm -rf -- "$attest_dir" || die "cannot clear attestation staging"
+	mkdir -p "$attest_dir" || die "cannot create attestation staging"
+	for f in "${accepted[@]}"; do
+		cp -- "dist/${f##*/}" "$attest_dir/" || die "cannot stage published package ${f##*/}"
+	done
+	printf 'attest=true\n' >> "$GITHUB_OUTPUT" || die "cannot request attestation"
+fi
 finish

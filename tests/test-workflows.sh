@@ -47,7 +47,8 @@ assert_grep "actionlint image is pinned by digest" 'rhysd/actionlint@sha256:' "$
 
 U=$W/auto-update.yml
 build=$(awk '/^  build:/ { on = 1; next } /^  publish:/ { on = 0 } on' "$U")
-publish=$(awk '/^  publish:/ { on = 1; next } on' "$U")
+publish=$(awk '/^  publish:/ { on = 1; next } /^  [a-zA-Z0-9_-]+:/ { on = 0 } on' "$U")
+attest=$(awk '/^  attest:/ { on = 1; next } /^  [a-zA-Z0-9_-]+:/ { on = 0 } on' "$U")
 [ -n "$build" ] && [ -n "$publish" ] || { fail "auto-update.yml has a build and a publish job"; finish; }
 
 assert_eq "the signing secret is referenced exactly once" "$(grep -h 'secrets\.' "${files[@]}" | grep -c 'secrets.VOIDLAB_PRIVKEY')" "1"
@@ -77,6 +78,16 @@ done
 assert_grep "publish job checks out the trusted repo itself" 'actions/checkout' <(echo "$publish")
 assert_grep "the artifact lands outside the workspace" 'path: \${{ runner.temp }}' <(echo "$publish")
 assert_grep "publish job downloads the artifact"   'download-artifact' <(echo "$publish")
+assert_grep "accepted packages upload even after a partial rejection" "!cancelled() && steps.publish.outputs.attest == 'true'" <(echo "$publish")
+assert_grep "attestation runs even after a partial rejection" "!cancelled() && needs.publish.outputs.attest == 'true'" <(echo "$attest")
+assert_grep "attestation downloads only accepted packages" 'name: accepted-packages' <(echo "$attest")
+assert_grep "attestation subjects are package files" 'subject-path: packages/\*.xbps' <(echo "$attest")
+assert_eq "attestation has no repository checkout or secret" "$(grep -cE 'actions/checkout|secrets\.' <<<"$attest" || true)" "0"
+assert_eq "attestation has only two write permissions" "$(grep -cE ': write$' <<<"$attest" || true)" "2"
+for permission in 'id-token: write' 'attestations: write' 'contents: read'; do
+	assert_grep "attestation permission includes $permission" "$permission" <(echo "$attest")
+done
+assert_eq "publisher has no OIDC or attestation permission" "$(grep -cE 'id-token:|attestations:' <<<"$publish" || true)" "0"
 overlay=$(cat "$W/overlay-report.yml")
 assert_eq "overlay report does not use a privileged container" \
 	"$(grep -cE -- '--privileged|/dev:/dev' <<<"$overlay" || true)" "0"

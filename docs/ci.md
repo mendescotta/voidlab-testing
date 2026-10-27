@@ -1,6 +1,6 @@
 # CI and automatic updates
 
-`.github/workflows/auto-update.yml` runs daily (and by hand, optionally for one package) in two jobs.
+`.github/workflows/auto-update.yml` runs daily (and by hand, optionally for one package) in three jobs.
 The read-only `build` job (no secrets, read-only token, no persisted git credentials, because it runs
 third-party build scripts) takes every template in the `auto` and `review` tiers of `tools/update-tiers`, asks `xbps-src
 update-check` for the newest **stable** upstream release (pre-releases and anything that is not a
@@ -12,7 +12,7 @@ whose packages carry provides, conflicts, alternatives or sonames that neither t
 package's own files account for, is rejected on its own, together with anything in the run that needs
 it, gets an `auto-update rejected: <pkg>` issue, and the rest is still published), opens one PR per
 passing bump (`<pkg> <version>`) and, for tier `auto`, merges and publishes it. At most one bump PR per package is open at a time (a new upstream version waits until it is merged or closed). Tier `review` leaves the
-PR open: merge it and the next daily run builds and publishes the merged version. It is the only job with a write token and the
+PR open: merge it and the next daily run builds and publishes the merged version. It is the only job with release-write permissions and the
 signing key. A failing package opens or updates one `auto-update failed: <pkg>` issue and never blocks
 the others. Tiers decide what is *bumped*: libraries, the toolchain and the session stack are tier
 `manual`, bump those by hand (`./voidlab tiers` lists every template with its tier). *Publishing* is a
@@ -26,6 +26,17 @@ would reject fails there with its reason in the log. It stops starting new packa
 (`AUTO_UPDATE_BUDGET_MIN`), so what was built is always handed over and the rest waits for the next run.
 The build artifact records the exact `void-packages` commit used by `voidlab sync`; the publish job
 fetches `common/shlibs` at that commit rather than from moving `master`.
+
+After publication, the publisher stages only accepted package files from `dist/`
+for the separate `attest` job. That job uses GitHub OIDC and attestation-write
+permissions, has no package-signing key or repository checkout, and generates
+provenance for those exact files. Staging errors fail the run. If one package is
+rejected but others are published, the accepted packages still receive attestations
+while the publisher retains its failure status. No-op runs skip attestation.
+Existing release assets are not retroactively attested. Verify a downloaded file with
+`gh attestation verify <package>.xbps --repo mendescotta/voidlab-testing`.
+The attestation identifies this workflow and its commit; it does not establish
+reproducibility or independently certify the package's contents.
 The package workflows pin the Void container to one image digest; workflow changes that update it should
 use a tested digest and update all references together. The actionlint container is pinned the same way.
 Update digests in a reviewed change after checking the relevant workflow runs. The Void package
