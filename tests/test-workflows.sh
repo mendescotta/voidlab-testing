@@ -34,7 +34,7 @@ for f in "${files[@]}"; do
 done
 for f in auto-update.yml check.yml overlay-report.yml; do
 	assert_grep "$f pre-checkout setup retains retries" 'retry xbps-install -y git' "$W/$f"
-	assert_grep "$f falls back if CI repository sync fails" 'if ! retry xbps-install -Syu xbps; then' "$W/$f"
+	assert_grep "$f falls back if CI repository sync fails" 'if ! bootstrap; then' "$W/$f"
 	assert_grep "$f fallback restores default repository" "sed -i 's|repo-ci|repo-default|g'" "$W/$f"
 done
 
