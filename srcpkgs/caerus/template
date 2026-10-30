@@ -11,7 +11,7 @@ maintainer="mendescotta <mendescotta@gmail.com>"
 license="GPL-3.0-or-later"
 homepage="https://github.com/mendescotta/Caerus"
 distfiles="https://github.com/mendescotta/Caerus/archive/refs/tags/v${version}.tar.gz"
-checksum=4a80c710a430d2c069cd0945b6ab56031e8a1a6ef97f0c3d651f49aafbb9a8af
+checksum=cb704198a97916c50c03e05f90ab07d522dcc9f0e8e18bfb08c5f509ed885a44
 
 do_install() {
 	vbin target/${RUST_TARGET}/release/caerus
