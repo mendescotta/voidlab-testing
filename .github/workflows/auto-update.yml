@@ -78,7 +78,7 @@ jobs:
         if: always()
         run: cat /tmp/auto-update-summary.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
 
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: build-out
           path: out
@@ -138,7 +138,7 @@ jobs:
       - name: Upload accepted packages for provenance
         # Valid packages are still published when another package is rejected.
         if: ${{ !cancelled() && steps.publish.outputs.attest == 'true' }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: accepted-packages
           path: ${{ runner.temp }}/voidlab-attest/*.xbps
