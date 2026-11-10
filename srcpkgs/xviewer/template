@@ -1,6 +1,6 @@
 # Template file for 'xviewer'
 pkgname=xviewer
-version=3.4.17
+version=3.4.18
 revision=1
 build_style=meson
 build_helper="gir"
@@ -14,4 +14,4 @@ license="GPL-2.0-or-later"
 homepage="https://github.com/linuxmint/xviewer"
 changelog="https://raw.githubusercontent.com/linuxmint/xviewer/master/NEWS"
 distfiles="https://github.com/linuxmint/xviewer/archive/refs/tags/${version}.tar.gz"
-checksum=4d8000f783d167903a165c57b4d260bb265eb678085e47ca0f23656d7591e386
+checksum=df47862ae8c41c901c3546b1ec3cc9e851485b4ae8aa681b4edebda8ce1e03d6
