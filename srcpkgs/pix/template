@@ -1,6 +1,6 @@
 # Template file for 'pix'
 pkgname=pix
-version=3.4.11
+version=3.4.12
 revision=1
 build_style=meson
 configure_args="-Drun-in-place=false -Dwebservices=false -Dlibbrasero=false"
@@ -15,7 +15,7 @@ license="GPL-2.0-or-later"
 homepage="https://github.com/linuxmint/pix"
 changelog="https://raw.githubusercontent.com/linuxmint/pix/master/NEWS"
 distfiles="https://github.com/linuxmint/pix/archive/refs/tags/${version}.tar.gz"
-checksum=47ac74d19399fdde5d0e2e5d1c2b4a29c3281a549ca7881a1fb8457b1bf5c5eb
+checksum=2018cd26faaac8f191e347351e1c77adc76ed17b52be5325d4f06fddb8473a63
 
 # Web-service export/import extensions need libsoup-2.4, which Void no
 # longer ships (superseded by libsoup3, an incompatible API); disc-burning
