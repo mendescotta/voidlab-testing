@@ -3,7 +3,7 @@
 _UDEV_VERSION="251" # compatible udev version provided
 
 pkgname=eudev
-version=3.2.15
+version=3.3.0
 revision=1
 build_style=gnu-configure
 configure_args="--enable-hwdb --enable-manpages"
@@ -16,7 +16,7 @@ license="GPL-2.0-or-later"
 homepage="https://github.com/eudev-project/eudev"
 changelog="https://github.com/eudev-project/eudev/releases"
 distfiles="https://github.com/eudev-project/eudev/releases/download/v${version}/eudev-${version}.tar.gz"
-checksum=eb69809fc0d1187f2463ab2149c53aa9f42a78e59f14ebea68eae6cb6b4fc1c3
+checksum=8fba6e4f49ea4b1938828a3c2e7cc48874816c68621386e527076b6477f5d6ef
 conf_files="/etc/udev/udev.conf"
 # groups referenced by 50-udev-default.rules but missing from base-files:
 # render (render nodes, kfd, accel) and clock (rtc, ptp)
@@ -28,7 +28,6 @@ if [ "$XBPS_ALLOW_CHROOT_BREAKOUT" ]; then
 fi
 
 post_install() {
-	mv "${DESTDIR}/etc/udev/hwdb.d" "${DESTDIR}/usr/lib/udev"
 	vsv udevd
 }
 
