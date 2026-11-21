@@ -1,6 +1,6 @@
 # Template file for 'gnome-maps'
 pkgname=gnome-maps
-version=51.2
+version=51.3
 revision=1
 build_style=meson
 build_helper="gir"
@@ -17,7 +17,7 @@ license="GPL-2.0-or-later"
 homepage="https://apps.gnome.org/Maps"
 changelog="https://gitlab.gnome.org/GNOME/gnome-maps/-/raw/main/NEWS"
 distfiles="${GNOME_SITE}/gnome-maps/${version%.*}/gnome-maps-${version}.tar.xz"
-checksum=81038882a057702bad0991ab9faa2e2f0d621fbefb22f49013710425ff38fd5a
+checksum=dc5c2004219842972e01b1dc23b0863c865ddcbb95e396d932948c55d6fc7136
 
 pre_build() {
 	if [ "$CROSS_BUILD" ]; then
